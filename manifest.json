@@ -1,0 +1,10 @@
+{
+  "name":"Orbit",
+  "short_name":"Orbit",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#0b0b10",
+  "theme_color":"#0b0b10",
+  "description":"A personal dashboard for life, training, travel, goals and more.",
+  "icons":[]
+}

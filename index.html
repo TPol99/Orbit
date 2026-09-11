@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0b10" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Orbit</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-theme="system">
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="brand"><span class="brand-mark">◯</span><span>ORBIT</span></div>
+      <nav>
+        <button class="nav-item active" data-section="home">⌂ <span>Home</span></button>
+        <button class="nav-item" data-section="training">✚ <span>Training</span></button>
+        <button class="nav-item" data-section="nutrition">⌁ <span>Nutrition</span></button>
+        <button class="nav-item" data-section="travel">✈ <span>Travel</span></button>
+        <button class="nav-item" data-section="calendar">□ <span>Calendar</span></button>
+        <button class="nav-item" data-section="goals">◎ <span>Goals</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <button id="themeButton" class="nav-item">◐ <span>Appearance</span></button>
+        <div class="profile-chip"><div class="avatar">TP</div><div><strong>Tristan</strong><small>Personal workspace</small></div></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="mobile-brand">ORBIT</div>
+        <div class="search">⌕ <input aria-label="Search" placeholder="Search flights, workouts, goals…" /></div>
+        <div class="top-actions"><button class="icon-btn" title="Notifications">♢</button><button class="icon-btn" id="mobileTheme" title="Appearance">◐</button></div>
+      </header>
+
+      <section class="content" id="home">
+        <div class="hero card">
+          <div><p class="eyebrow">Friday · 11 September 2026</p><h1>Good morning, Tristan.</h1><p class="muted">Your life, training and travel — orbiting in one place.</p></div>
+          <div class="hero-orbit">✦</div>
+        </div>
+
+        <div class="grid four">
+          <article class="card stat-card"><span class="icon">□</span><div><strong>3</strong><span>events today</span></div><small>Next · 09:00</small></article>
+          <article class="card stat-card"><span class="icon">✚</span><div><strong>Pull Day</strong><span>6 exercises · ~55 min</span></div><button class="primary small">Start workout</button></article>
+          <article class="card stat-card"><span class="icon">✈</span><div><strong>Greece</strong><span>Upcoming travel</span></div><small>12 days · 26 Jun – 7 Jul</small></article>
+          <article class="card stat-card"><span class="icon">✓</span><div><strong>3</strong><span>tasks remaining</span></div><small>1 high priority</small></article>
+        </div>
+
+        <div class="grid main-grid">
+          <article class="card weather"><div class="card-head"><h2>Brisbane</h2><span>☀</span></div><div class="temperature">22°</div><p class="muted">Clear · H 26° · L 16°</p><div class="mini-chart"><i style="height:42%"></i><i style="height:55%"></i><i style="height:70%"></i><i style="height:62%"></i><i style="height:48%"></i><i style="height:36%"></i></div></article>
+          <article class="card travel-card"><div class="card-head"><h2>Upcoming travel</h2><button class="text-btn" data-section-jump="travel">View all</button></div><div class="travel-item"><div class="trip-emoji">🇬🇷</div><div class="trip-info"><strong>Greece</strong><span>26 Jun – 7 Jul · 12 days</span><small>4 flights · 2 hotels · 1 ferry</small></div><span class="trip-badge">12 days</span></div><div class="travel-preview"><div><b>26 Jun</b><span>✈ SYD → AUH → VIE</span></div><div><b>27 Jun</b><span>🏨 Mercure Wien City</span></div><div><b>2 Jul</b><span>✈ VIE → HER</span></div></div></article>
+          <article class="card calendar"><div class="card-head"><h2>Today</h2><button class="text-btn">Calendar</button></div><div class="timeline"><div><time>09:00</time><span>AOT Daily</span></div><div><time>13:30</time><span>Project meeting</span></div><div><time>18:00</time><span>Gym · Pull Day</span></div></div></article>
+          <article class="card progress"><div class="card-head"><h2>Training progress</h2><span>🔥 12 day streak</span></div><div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><p><strong>4 workouts</strong> this week · <strong>+7%</strong> volume</p></article>
+          <article class="card goal"><div class="card-head"><h2>Current goal</h2><span>84%</span></div><strong class="goal-title">Bench 100 kg</strong><div class="progress-track"><span style="width:84%"></span></div><small>84 / 100 kg</small></article>
+          <article class="card quick"><div class="card-head"><h2>Quick add</h2></div><div class="quick-grid"><button>＋<span>Workout</span></button><button>＋<span>Meal</span></button><button>＋<span>Task</span></button><button>＋<span>Event</span></button><button data-add-flight type="button">✈<span>Add flight</span></button><button>＋<span>Goal</span></button></div></article>
+        </div>
+      </section>
+
+      <section class="placeholder hidden" id="training"><div class="card"><p class="eyebrow">Module</p><h1>Training</h1><p class="muted">Workout builder, exercise library, GIF demonstrations, sets, reps, weights, rest timers and progression history will live here.</p></div></section>
+      <section class="placeholder hidden" id="nutrition"><div class="card"><p class="eyebrow">Module</p><h1>Nutrition</h1><p class="muted">Meals, protein, calories and daily targets.</p></div></section>
+      <section class="placeholder hidden" id="travel">
+        <div class="card travel-page-card">
+          <div class="module-header">
+            <div><p class="eyebrow">Travel</p><h1>Upcoming travel</h1><p class="muted">Keep flights, hotels, ferries, trains and plans together in one trip.</p></div>
+            <button class="primary" id="addTripButton" type="button">+ Add trip</button>
+          </div>
+          <div id="tripList" class="trip-list" aria-live="polite"></div>
+          <div id="emptyTrips" class="empty-state hidden"><div class="empty-icon">✈</div><strong>No trips yet</strong><span>Create a trip, then add flights, hotels and other itinerary items.</span><button class="secondary" id="emptyAddTrip" type="button">Create your first trip</button></div>
+        </div>
+      </section>
+      <section class="placeholder hidden" id="calendar"><div class="card"><p class="eyebrow">Module</p><h1>Calendar</h1><p class="muted">Outlook integration will connect here later.</p></div></section>
+      <section class="placeholder hidden" id="goals"><div class="card"><p class="eyebrow">Module</p><h1>Goals</h1><p class="muted">Long-term targets with progress and milestones.</p></div></section>
+    </main>
+  </div>
+
+      <div class="modal-backdrop hidden" id="flightModal" aria-hidden="true">
+        <div class="modal card" role="dialog" aria-modal="true" aria-labelledby="flightModalTitle">
+          <div class="modal-head"><div><p class="eyebrow">Travel</p><h2 id="flightModalTitle">Add a flight</h2></div><button class="icon-btn" type="button" data-close-flight aria-label="Close">×</button></div>
+          <p class="muted modal-intro">Enter the flight number and date first. Orbit will populate the itinerary when a flight-data provider is connected.</p>
+          <div class="flight-lookup-row">
+            <label>Flight number<input id="flightNumber" name="flightNumberLookup" placeholder="VA332" autocomplete="off"></label>
+            <label>Date<input id="flightDate" name="flightDateLookup" type="date"></label>
+            <button class="primary" id="flightSearchButton" type="button">Find flight</button>
+          </div>
+          <div class="lookup-status" id="flightStatus" aria-live="polite">Ready.</div>
+          <label class="trip-target-label">Add to trip<select id="flightTripTarget" name="tripId"><option value="">Choose a trip…</option></select></label>
+          <form id="flightForm" class="manual-flight-form">
+            <button type="button" class="text-btn" id="manualFlightToggle">Enter details manually</button>
+            <div id="manualFlightFields" class="hidden manual-grid">
+              <label>Airline<input name="airline" placeholder="Virgin Australia"></label>
+              <label>Flight number<input name="flightNumber" placeholder="VA332"></label>
+              <label>Aircraft<input name="aircraft" placeholder="Boeing 737"></label>
+              <label>Origin<input name="origin" placeholder="BNE" maxlength="3"></label>
+              <label>Destination<input name="destination" placeholder="MEL" maxlength="3"></label>
+              <label>Departure<input name="departure" type="datetime-local"></label>
+              <label>Arrival<input name="arrival" type="datetime-local"></label>
+              <label>Departure terminal<input name="departureTerminal" placeholder="Domestic"></label>
+              <label>Arrival terminal<input name="arrivalTerminal" placeholder="Terminal 4"></label>
+              <label>Status<input name="status" value="Scheduled"></label>
+              <label>Booking reference<input name="bookingReference" placeholder="ABC123"></label>
+              <label>Seat<input name="seat" placeholder="12A"></label>
+              <label class="full">Notes<textarea name="notes" rows="3" placeholder="Anything you want to remember…"></textarea></label>
+            </div>
+            <div class="modal-actions"><button class="secondary" type="button" data-close-flight>Cancel</button><button class="primary" type="submit">Save flight</button></div>
+          </form>
+        </div>
+      </div>
+
+
+      <div class="modal-backdrop hidden" id="tripModal" aria-hidden="true">
+        <div class="modal card" role="dialog" aria-modal="true" aria-labelledby="tripModalTitle">
+          <div class="modal-head"><div><p class="eyebrow">Travel</p><h2 id="tripModalTitle">Create a trip</h2></div><button class="icon-btn" type="button" data-close-trip aria-label="Close">×</button></div>
+          <form id="tripForm" class="trip-form">
+            <div class="manual-grid">
+              <label>Trip name<input name="name" placeholder="Greece 2027" required maxlength="80"></label>
+              <label>Emoji<input name="emoji" placeholder="🇬🇷" maxlength="4"></label>
+              <label>Start date<input name="startDate" type="date" required></label>
+              <label>End date<input name="endDate" type="date" required></label>
+              <label class="full">Notes<textarea name="notes" rows="3" placeholder="Anything you want to remember…"></textarea></label>
+            </div>
+            <div class="modal-actions"><button class="secondary" type="button" data-close-trip>Cancel</button><button class="primary" type="submit">Create trip</button></div>
+          </form>
+        </div>
+      </div>
+
+      <div class="modal-backdrop hidden" id="tripDetailModal" aria-hidden="true">
+        <div class="modal card trip-detail-modal" role="dialog" aria-modal="true" aria-labelledby="tripDetailTitle">
+          <div class="modal-head"><div><p class="eyebrow">Trip</p><h2 id="tripDetailTitle">Trip</h2><p class="muted" id="tripDetailSubline"></p></div><button class="icon-btn" type="button" data-close-trip-detail aria-label="Close">×</button></div>
+          <div id="tripDetailBody" class="trip-detail-body"></div>
+          <div class="modal-actions"><button class="secondary" type="button" data-close-trip-detail>Close</button><button class="primary" type="button" id="tripDetailAddItem">+ Add itinerary item</button></div>
+        </div>
+      </div>
+
+      <div class="modal-backdrop hidden" id="itemModal" aria-hidden="true">
+        <div class="modal card" role="dialog" aria-modal="true" aria-labelledby="itemModalTitle">
+          <div class="modal-head"><div><p class="eyebrow">Trip item</p><h2 id="itemModalTitle">Add itinerary item</h2></div><button class="icon-btn" type="button" data-close-item aria-label="Close">×</button></div>
+          <form id="itemForm" class="item-form">
+            <input type="hidden" name="tripId" id="itemTripId">
+            <div class="item-type-grid" id="itemTypeGrid">
+              <button type="button" class="item-type active" data-item-type="flight">✈️<span>Flight</span></button>
+              <button type="button" class="item-type" data-item-type="hotel">🏨<span>Hotel</span></button>
+              <button type="button" class="item-type" data-item-type="train">🚆<span>Train</span></button>
+              <button type="button" class="item-type" data-item-type="ferry">🚢<span>Ferry</span></button>
+              <button type="button" class="item-type" data-item-type="car">🚗<span>Car hire</span></button>
+              <button type="button" class="item-type" data-item-type="activity">🎟️<span>Activity</span></button>
+              <button type="button" class="item-type" data-item-type="custom">📌<span>Custom</span></button>
+            </div>
+            <div class="manual-grid">
+              <label>Title<input name="title" id="itemTitle" placeholder="VA332 · BNE → MEL" required maxlength="100"></label>
+              <label>Date<input name="date" type="date" required></label>
+              <label>Time<input name="time" type="time"></label>
+              <label>End date<input name="endDate" type="date"></label>
+              <label>End time<input name="endTime" type="time"></label>
+              <label>Reference<input name="reference" placeholder="Booking reference"></label>
+              <label class="full">Notes<textarea name="notes" rows="3" placeholder="Terminal, gate, address, confirmation details…"></textarea></label>
+            </div>
+            <div class="modal-actions"><button class="secondary" type="button" data-close-item>Cancel</button><button class="primary" type="submit">Add to trip</button></div>
+          </form>
+        </div>
+      </div>
+  <script src="app.js"></script>
+</body>
+</html>
