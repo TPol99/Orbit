@@ -245,6 +245,7 @@ const tripDuration = (start, end) => {
 };
 const fmtShortDate = (value) => value ? new Intl.DateTimeFormat(undefined,{day:'numeric',month:'short'}).format(new Date(`${value}T00:00:00`)) : '';
 const fmtLongDate = (value) => value ? new Intl.DateTimeFormat(undefined,{weekday:'short',day:'numeric',month:'short'}).format(new Date(`${value}T00:00:00`)) : '';
+const fmtDDMMYYYY = (value) => value ? (() => { const [y,m,d] = value.split('-'); return `${d}-${m}-${y}`; })() : '';
 const escapeHtml = (value='') => String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
 const openTripModal = () => {
@@ -489,7 +490,7 @@ const renderHomeTravel = () => {
     card.querySelector('[data-section-jump]')?.addEventListener('click',()=>showSection('travel')); return;
   }
   const items = upcoming.items.slice(0,3);
-  card.innerHTML = `<div class="card-head"><h2>Upcoming travel</h2><div class="card-head-actions"><button class="text-btn" data-open-home-trip>View trip</button><button class="text-btn" data-section-jump="travel">All trips</button></div></div><button class="travel-item travel-item-button" type="button" data-open-home-trip><div class="trip-emoji">${escapeHtml(upcoming.emoji)}</div><div class="trip-info"><strong>${escapeHtml(upcoming.name)}</strong><span>${fmtShortDate(upcoming.startDate)} – ${fmtShortDate(upcoming.endDate)} · ${tripDuration(upcoming.startDate,upcoming.endDate)}</span><small>${upcoming.items.filter(i=>i.type==='flight').length} flights · ${upcoming.items.filter(i=>i.type==='hotel').length} hotels · ${upcoming.items.filter(i=>['ferry','train'].includes(i.type)).length} transit</small></div><span class="trip-badge">${escapeHtml(upcoming.startDate)}</span></button><div class="travel-preview">${items.length ? items.map(i=>`<div><b>${fmtShortDate(i.date)}</b><span>${itemIcon(i.type)} ${escapeHtml(i.title)}</span></div>`).join('') : `<div><b>Next</b><span>Add flights, hotels and plans</span></div>`}</div>`;
+  card.innerHTML = `<div class="card-head"><h2>Upcoming travel</h2><div class="card-head-actions"><button class="text-btn" data-open-home-trip>View trip</button><button class="text-btn" data-section-jump="travel">All trips</button></div></div><button class="travel-item travel-item-button" type="button" data-open-home-trip><div class="trip-emoji">${escapeHtml(upcoming.emoji)}</div><div class="trip-info"><strong>${escapeHtml(upcoming.name)}</strong><span>${fmtShortDate(upcoming.startDate)} – ${fmtShortDate(upcoming.endDate)} · ${tripDuration(upcoming.startDate,upcoming.endDate)}</span><small>${upcoming.items.filter(i=>i.type==='flight').length} flights · ${upcoming.items.filter(i=>i.type==='hotel').length} hotels · ${upcoming.items.filter(i=>['ferry','train'].includes(i.type)).length} transit</small></div><span class="trip-badge">${escapeHtml(fmtDDMMYYYY(upcoming.startDate))}</span></button><div class="travel-preview">${items.length ? items.map(i=>`<div><b>${fmtShortDate(i.date)}</b><span>${itemIcon(i.type)} ${escapeHtml(i.title)}</span></div>`).join('') : `<div><b>Next</b><span>Add flights, hotels and plans</span></div>`}</div>`;
   card.querySelectorAll('[data-open-home-trip]').forEach(el=>el.addEventListener('click',()=>openTripDetail(upcoming.id)));
   card.querySelector('[data-section-jump]')?.addEventListener('click',()=>showSection('travel'));
 };
