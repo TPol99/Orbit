@@ -22,3 +22,6 @@ body[data-theme="light"]{--bg:#f5f4f8;--panel:rgba(255,255,255,.86);--panel2:#ff
 
 /* Flight detail styling */
 .flight-detail-route{display:flex;align-items:center;gap:10px;font-size:22px;margin-top:14px}.flight-detail-route span{color:var(--muted);font-size:16px}.detail-flight-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.detail-flight-meta span{font-size:10px;padding:5px 8px;border-radius:999px;background:var(--bg);color:var(--muted)}.detail-flight-times{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.detail-flight-times>div{border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:10px}.detail-flight-times small,.detail-flight-times b,.detail-flight-times span{display:block}.detail-flight-times small{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.1em}.detail-flight-times b{font-size:17px;margin-top:4px}.detail-flight-times span{color:var(--muted);font-size:10px;margin-top:3px}@media(max-width:760px){.detail-flight-times{grid-template-columns:1fr 1fr}.flight-detail-route{font-size:20px}}
+
+/* v6: modal visibility guard — must override .modal-backdrop display:grid */
+.modal-backdrop.hidden { display: none !important; }

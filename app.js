@@ -496,3 +496,29 @@ const renderHomeTravel = () => {
 
 renderTrips();
 renderHomeTravel();
+
+
+// v6 launch-state and modal safety
+const orbitModals = ['flightModal', 'tripModal', 'tripDetailModal', 'itemModal']
+  .map(id => document.getElementById(id))
+  .filter(Boolean);
+
+const closeAllOrbitModals = () => {
+  orbitModals.forEach(modal => {
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  });
+};
+
+closeAllOrbitModals();
+showSection('home');
+
+orbitModals.forEach(modal => {
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) closeAllOrbitModals();
+  });
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeAllOrbitModals();
+});
