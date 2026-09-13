@@ -309,3 +309,36 @@ body.nav-collapsed .sidebar-toggle svg { transform:rotate(180deg); }
   #training { padding-left:12px; padding-right:12px; }
   .mobile-brand { font-size:16px; letter-spacing:.22em; }
 }
+
+/* Orbit v15: training card inset + mobile logo alignment */
+.workout-list-card,
+.exercise-library-card,
+.training-next-card,
+.progress-card {
+  padding: 20px;
+}
+
+@media (max-width: 760px) {
+  .workout-list-card,
+  .exercise-library-card,
+  .training-next-card,
+  .progress-card {
+    padding: 16px;
+    width: 100%;
+  }
+
+  .exercise-library-card .card-head,
+  .workout-list-card .card-head,
+  .training-next-card .card-head,
+  .progress-card .card-head {
+    width: 100%;
+  }
+
+  .mobile-brand {
+    transform: translate(-50%, -4px);
+  }
+
+  .mobile-brand-mark svg {
+    filter: drop-shadow(0 0 7px rgba(183,162,255,.58));
+  }
+}
