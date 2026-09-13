@@ -147,15 +147,42 @@
               <button type="button" class="item-type" data-item-type="activity">🎟️<span>Activity</span></button>
               <button type="button" class="item-type" data-item-type="custom">📌<span>Custom</span></button>
             </div>
-            <div class="manual-grid">
-              <label>Title<input name="title" id="itemTitle" placeholder="VA332 · BNE → MEL" required maxlength="100"></label>
-              <label>Date<input name="date" type="date" required></label>
-              <label>Time<input name="time" type="time"></label>
-              <label>End date<input name="endDate" type="date"></label>
-              <label>End time<input name="endTime" type="time"></label>
-              <label>Reference<input name="reference" placeholder="Booking reference"></label>
-              <label class="full">Notes<textarea name="notes" rows="3" placeholder="Terminal, gate, address, confirmation details…"></textarea></label>
-            </div>
+
+            <section id="flightItemFields" class="item-flight-panel">
+              <div class="flight-lookup-row">
+                <label>Flight number<input id="itemFlightNumber" name="flightNumber" placeholder="VA332" autocomplete="off" autocapitalize="characters"></label>
+                <label>Date<input id="itemFlightDate" name="flightDate" type="date"></label>
+                <button class="primary" id="itemFlightSearchButton" type="button">Find flight</button>
+              </div>
+              <div class="lookup-status" id="itemFlightStatus" aria-live="polite">Enter the flight number and date to auto-fill the details.</div>
+              <div class="manual-grid">
+                <label>Airline<input name="airline" id="itemAirline" placeholder="Virgin Australia"></label>
+                <label>Aircraft<input name="aircraft" id="itemAircraft" placeholder="Boeing 737"></label>
+                <label>Origin<input name="origin" id="itemOrigin" placeholder="BNE" maxlength="3"></label>
+                <label>Destination<input name="destination" id="itemDestination" placeholder="MEL" maxlength="3"></label>
+                <label>Departure<input name="departure" id="itemDeparture" type="datetime-local"></label>
+                <label>Arrival<input name="arrival" id="itemArrival" type="datetime-local"></label>
+                <label>Departure terminal<input name="departureTerminal" id="itemDepartureTerminal" placeholder="Domestic"></label>
+                <label>Arrival terminal<input name="arrivalTerminal" id="itemArrivalTerminal" placeholder="Terminal 4"></label>
+                <label>Status<input name="status" id="itemStatus" value="Scheduled"></label>
+                <label>Booking reference<input name="reference" id="itemReference" placeholder="ABC123"></label>
+                <label>Seat<input name="seat" id="itemSeat" placeholder="12A"></label>
+                <label class="full">Notes<textarea name="notes" id="itemNotes" rows="3" placeholder="Gate, baggage, seat or other details…"></textarea></label>
+              </div>
+            </section>
+
+            <section id="genericItemFields" class="hidden">
+              <div class="manual-grid">
+                <label>Title<input name="title" id="itemTitle" placeholder="Hotel name" maxlength="100"></label>
+                <label>Date<input name="date" id="itemDate" type="date"></label>
+                <label>Time<input name="time" id="itemTime" type="time"></label>
+                <label>End date<input name="endDate" id="itemEndDate" type="date"></label>
+                <label>End time<input name="endTime" id="itemEndTime" type="time"></label>
+                <label>Reference<input name="genericReference" id="itemGenericReference" placeholder="Booking reference"></label>
+                <label class="full">Notes<textarea name="genericNotes" id="itemGenericNotes" rows="3" placeholder="Address, confirmation details, plans…"></textarea></label>
+              </div>
+            </section>
+
             <div class="modal-actions"><button class="secondary" type="button" data-close-item>Cancel</button><button class="primary" type="submit">Add to trip</button></div>
           </form>
         </div>

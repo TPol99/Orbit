@@ -224,6 +224,10 @@ const tripModal = document.getElementById('tripModal');
 const itemModal = document.getElementById('itemModal');
 const tripForm = document.getElementById('tripForm');
 const itemForm = document.getElementById('itemForm');
+const flightItemFields = document.getElementById('flightItemFields');
+const genericItemFields = document.getElementById('genericItemFields');
+const itemFlightSearchButton = document.getElementById('itemFlightSearchButton');
+const itemFlightStatus = document.getElementById('itemFlightStatus');
 const tripList = document.getElementById('tripList');
 const emptyTrips = document.getElementById('emptyTrips');
 const tripStorageKey = 'orbit-trips';
@@ -254,13 +258,18 @@ const openTripModal = () => {
 };
 const closeTripModal = () => { tripModal?.classList.add('hidden'); tripModal?.setAttribute('aria-hidden','true'); };
 const openItemModal = (tripId) => {
+  if (!itemModal) return;
   itemForm?.reset();
-  document.getElementById('itemTripId').value = tripId;
-  document.querySelectorAll('.item-type').forEach((b,i)=>b.classList.toggle('active',i===0));
-  itemForm?.elements.date && (itemForm.elements.date.value = readTrips().find(t=>t.id===tripId)?.startDate || '');
-  itemModal?.classList.remove('hidden'); itemModal?.setAttribute('aria-hidden','false');
-  document.getElementById('itemTitle')?.focus();
+  itemTripId.value = tripId;
+  document.querySelectorAll('.item-type').forEach((b,i)=>b.classList.toggle('active', i===0));
+  setItemTypeUI('flight');
+  itemFlightStatus.textContent='Enter the flight number and date to auto-fill the details.';
+  delete itemFlightStatus.dataset.state;
+  itemModal.classList.remove('hidden');
+  itemModal.setAttribute('aria-hidden','false');
+  document.getElementById('itemFlightNumber')?.focus();
 };
+
 const closeItemModal = () => { itemModal?.classList.add('hidden'); itemModal?.setAttribute('aria-hidden','true'); };
 
 document.getElementById('addTripButton')?.addEventListener('click', openTripModal);
@@ -279,23 +288,125 @@ tripForm?.addEventListener('submit', (event) => {
 });
 
 const selectedItemType = () => document.querySelector('.item-type.active')?.dataset.itemType || 'custom';
-document.querySelectorAll('.item-type').forEach(button => button.addEventListener('click',()=>{
-  document.querySelectorAll('.item-type').forEach(b=>b.classList.remove('active')); button.classList.add('active');
-  const titles = {flight:'VA332 · BNE → MEL',hotel:'Hotel name',train:'Train journey',ferry:'Ferry crossing',car:'Car hire',activity:'Activity',custom:'Custom itinerary item'};
-  document.getElementById('itemTitle').placeholder = titles[button.dataset.itemType] || titles.custom;
+
+const setItemTypeUI = (type) => {
+  const isFlight = type === 'flight';
+  flightItemFields?.classList.toggle('hidden', !isFlight);
+  genericItemFields?.classList.toggle('hidden', isFlight);
+  const titleInput = document.getElementById('itemTitle');
+  const titlePlaceholders = {hotel:'Hotel name',train:'Train journey',ferry:'Ferry crossing',car:'Car hire',activity:'Activity',custom:'Custom itinerary item'};
+  if (titleInput) {
+    titleInput.placeholder = titlePlaceholders[type] || 'Custom itinerary item';
+    titleInput.required = !isFlight;
+  }
+};
+
+document.querySelectorAll('.item-type').forEach(button => button.addEventListener('click', () => {
+  document.querySelectorAll('.item-type').forEach(b=>b.classList.remove('active'));
+  button.classList.add('active');
+  setItemTypeUI(button.dataset.itemType);
 }));
+
+const fillItineraryFlight = (flight) => {
+  const values = {
+    itemFlightNumber: flight.flightNumber, itemAirline: flight.airline, itemAircraft: flight.aircraft,
+    itemOrigin: flight.origin, itemDestination: flight.destination,
+    itemDeparture: toLocalDateTimeInput(flight.departureLocal), itemArrival: toLocalDateTimeInput(flight.arrivalLocal),
+    itemDepartureTerminal: flight.departureTerminal, itemArrivalTerminal: flight.arrivalTerminal, itemStatus: flight.status
+  };
+  Object.entries(values).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el && value != null && value !== '') el.value = value;
+  });
+  const dateInput = document.getElementById('itemFlightDate');
+  const dep = flight.departureLocal ? new Date(flight.departureLocal) : null;
+  if (dateInput && dep && !Number.isNaN(dep.valueOf())) {
+    const pad=n=>String(n).padStart(2,'0');
+    dateInput.value=`${dep.getFullYear()}-${pad(dep.getMonth()+1)}-${pad(dep.getDate())}`;
+  }
+};
+
+itemFlightSearchButton?.addEventListener('click', async () => {
+  const number = document.getElementById('itemFlightNumber')?.value.trim().toUpperCase();
+  const date = document.getElementById('itemFlightDate')?.value;
+  if (!number || !date) {
+    itemFlightStatus.textContent='Enter a flight number and date first.';
+    itemFlightStatus.dataset.state='error';
+    return;
+  }
+  itemFlightSearchButton.disabled=true;
+  itemFlightStatus.textContent='Looking up flight…';
+  itemFlightStatus.dataset.state='loading';
+  try {
+    const response=await fetch(`/api/flight-lookup?flightNumber=${encodeURIComponent(number)}&date=${encodeURIComponent(date)}`,{headers:{Accept:'application/json'}});
+    if(response.ok){
+      const data=await response.json();
+      if(data?.flight){
+        const flight=normaliseFlight(data.flight);
+        fillItineraryFlight(flight);
+        itemFlightStatus.textContent=`Flight found${data.source ? ` · ${data.source}` : ''}.`;
+        itemFlightStatus.dataset.state='success';
+        return;
+      }
+    }
+    const preview=demoLookup(number,date);
+    if(preview){
+      fillItineraryFlight(preview);
+      itemFlightStatus.textContent='Preview data loaded. Connect the flight-data provider for live lookup.';
+      itemFlightStatus.dataset.state='success';
+    }else{
+      document.getElementById('itemFlightNumber').value=number;
+      itemFlightStatus.textContent='No result yet. You can complete the flight details manually below.';
+      itemFlightStatus.dataset.state='error';
+    }
+  } catch(error) {
+    const preview=demoLookup(number,date);
+    if(preview){
+      fillItineraryFlight(preview);
+      itemFlightStatus.textContent='Preview data loaded. Live API is not configured yet.';
+      itemFlightStatus.dataset.state='success';
+    }else{
+      itemFlightStatus.textContent='Live lookup is not configured yet. Manual flight details are still available.';
+      itemFlightStatus.dataset.state='error';
+    }
+  } finally {
+    itemFlightSearchButton.disabled=false;
+  }
+});
 
 itemForm?.addEventListener('submit', (event) => {
   event.preventDefault();
-  const data = Object.fromEntries(new FormData(itemForm).entries());
+  const type = selectedItemType();
+  const formData = Object.fromEntries(new FormData(itemForm).entries());
   const trips = readTrips();
-  const trip = trips.find(t=>t.id===data.tripId);
+  const trip = trips.find(t=>t.id===formData.tripId);
   if (!trip) return;
-  const item = { id:uid('item'), type:selectedItemType(), title:data.title.trim(), date:data.date, time:data.time, endDate:data.endDate, endTime:data.endTime, reference:data.reference.trim(), notes:data.notes.trim() };
+
+  let item;
+  if (type === 'flight') {
+    const flightNumber=(formData.flightNumber||'').trim().toUpperCase();
+    if (!flightNumber) { alert('Enter a flight number.'); return; }
+    const origin=(formData.origin||'').trim().toUpperCase();
+    const destination=(formData.destination||'').trim().toUpperCase();
+    item = {
+      id:uid('item'), type:'flight', title:`${flightNumber}${origin&&destination ? ` · ${origin} → ${destination}` : ''}`,
+      date:(formData.departure||'').slice(0,10) || formData.flightDate,
+      time:(formData.departure||'').slice(11,16), endDate:(formData.arrival||'').slice(0,10), endTime:(formData.arrival||'').slice(11,16),
+      reference:(formData.reference||'').trim(), notes:(formData.notes||'').trim(),
+      airline:(formData.airline||'').trim(), aircraft:(formData.aircraft||'').trim(), flightNumber, origin, destination,
+      departureTerminal:(formData.departureTerminal||'').trim(), arrivalTerminal:(formData.arrivalTerminal||'').trim(), status:(formData.status||'Scheduled').trim(), seat:(formData.seat||'').trim()
+    };
+  } else {
+    if (!formData.title?.trim() || !formData.date) { alert('Add a title and date.'); return; }
+    item = { id:uid('item'), type, title:formData.title.trim(), date:formData.date, time:formData.time, endDate:formData.endDate, endTime:formData.endTime, reference:(formData.genericReference||'').trim(), notes:(formData.genericNotes||'').trim() };
+  }
+
   trip.items.push(item);
   trip.items.sort((a,b)=>`${a.date}T${a.time || '00:00'}`.localeCompare(`${b.date}T${b.time || '00:00'}`));
   writeTrips(trips); closeItemModal(); renderTrips(); renderHomeTravel();
 });
+
+setItemTypeUI('flight');
 
 const itemIcon = type => ({flight:'✈️',hotel:'🏨',train:'🚆',ferry:'🚢',car:'🚗',activity:'🎟️',custom:'📌'}[type] || '📌');
 const itemLabel = type => ({flight:'Flight',hotel:'Hotel',train:'Train',ferry:'Ferry',car:'Car hire',activity:'Activity',custom:'Custom'}[type] || 'Item');
@@ -335,8 +446,9 @@ const openTripDetail = (tripId) => {
           <div class="timeline-rail"><div class="timeline-dot">${itemIcon(item.type)}</div>${index < items.length-1 ? '<span></span>' : ''}</div>
           <div class="timeline-card">
             <div class="timeline-card-head"><div><p>${fmtLongDate(item.date)}${item.time ? ` · ${escapeHtml(item.time)}` : ''}</p><h3>${escapeHtml(item.title)}</h3></div><span class="type-pill">${itemLabel(item.type)}</span></div>
+            ${item.type === 'flight' ? `<div class="flight-detail-route"><strong>${escapeHtml(item.origin || '---')}</strong><span>→</span><strong>${escapeHtml(item.destination || '---')}</strong></div><div class="detail-flight-meta"><span>${escapeHtml(item.airline || 'Airline not set')}</span><span>${escapeHtml(item.aircraft || '')}</span><span>${escapeHtml(item.status || 'Scheduled')}</span></div><div class="detail-flight-times"><div><small>Departure</small><b>${item.time ? escapeHtml(item.time) : '—'}</b>${item.departureTerminal ? `<span>${escapeHtml(item.departureTerminal)}</span>` : ''}</div><div><small>Arrival</small><b>${item.endTime ? escapeHtml(item.endTime) : '—'}</b>${item.arrivalTerminal ? `<span>${escapeHtml(item.arrivalTerminal)}</span>` : ''}</div></div>${item.seat ? `<div class="detail-meta"><span>Seat</span><b>${escapeHtml(item.seat)}</b></div>` : ''}` : ''}
             ${item.reference ? `<div class="detail-meta"><span>Reference</span><b>${escapeHtml(item.reference)}</b></div>` : ''}
-            ${(item.endDate || item.endTime) ? `<div class="detail-meta"><span>Ends</span><b>${item.endDate ? fmtLongDate(item.endDate) : ''}${item.endTime ? ` · ${escapeHtml(item.endTime)}` : ''}</b></div>` : ''}
+            ${item.type !== 'flight' && (item.endDate || item.endTime) ? `<div class="detail-meta"><span>Ends</span><b>${item.endDate ? fmtLongDate(item.endDate) : ''}${item.endTime ? ` · ${escapeHtml(item.endTime)}` : ''}</b></div>` : ''}
             ${item.notes ? `<p class="detail-notes">${escapeHtml(item.notes)}</p>` : ''}
           </div>
         </article>`).join('') : `<div class="detail-empty"><span>✈️</span><strong>Your itinerary is empty</strong><p>Add flights, hotels and plans to build your timeline.</p></div>`}
