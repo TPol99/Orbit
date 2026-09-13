@@ -689,3 +689,28 @@ sidebarToggle?.addEventListener('click', () => {
 if (localStorage.getItem('orbit-nav-collapsed') === '1' && window.innerWidth > 760) document.body.classList.add('nav-collapsed');
 window.addEventListener('resize', () => { if (window.innerWidth > 760) closeMobileNav(); });
 document.querySelectorAll('.nav-item[data-section]').forEach(button => button.addEventListener('click', closeMobileNav));
+
+
+// v13 mobile search overlay
+const mobileSearchTrigger = document.getElementById('mobileSearchTrigger');
+const searchBar = document.getElementById('searchBar');
+const searchClose = document.getElementById('searchClose');
+const globalSearch = document.getElementById('globalSearch');
+const topbar = document.querySelector('.topbar');
+const openSearch = () => {
+  topbar?.classList.add('search-open');
+  setTimeout(() => globalSearch?.focus(), 40);
+};
+const closeSearch = () => {
+  topbar?.classList.remove('search-open');
+  globalSearch?.blur();
+};
+mobileSearchTrigger?.addEventListener('click', openSearch);
+searchClose?.addEventListener('click', closeSearch);
+globalSearch?.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeSearch();
+});
+document.addEventListener('click', (event) => {
+  if (!topbar?.classList.contains('search-open')) return;
+  if (!topbar.contains(event.target)) closeSearch();
+});

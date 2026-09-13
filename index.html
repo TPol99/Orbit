@@ -13,12 +13,12 @@
 <body data-theme="system">
   <div class="app-shell">
     <aside class="sidebar" aria-label="Primary navigation">
-      <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 14.2 13.5 10V4.25c0-.69-.56-1.25-1.25-1.25h-.5c-.69 0-1.25.56-1.25 1.25V10L3 14.2c-.38.21-.61.61-.61 1.04v.62c0 .4.39.71.78.61L10.5 14.7v4.02l-2.02 1.48c-.28.2-.45.53-.45.88v.35L12 20.1l3.97 1.33v-.35c0-.35-.17-.68-.45-.88L13.5 18.72V14.7l7.33 1.77c.39.1.78-.21.78-.61v-.62c0-.43-.23-.83-.61-1.04Z"/></svg></span><span>ORBIT</span><button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Collapse navigation" title="Collapse navigation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/></svg></span><span>ORBIT</span><button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Collapse navigation" title="Collapse navigation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div>
       <nav>
         <button class="nav-item active" data-section="home"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.8 12 3l9 7.8v8.2a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/><path d="M8 20v-6h8v6"/></svg><span>Home</span></button>
         <button class="nav-item" data-section="training"><svg class="nav-icon dumbbell-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.75" y="7.5" width="3.25" height="9" rx="1.15"/><rect x="6.7" y="5.75" width="2.55" height="12.5" rx=".95"/><path d="M9.25 10.25h5.5M9.25 13.75h5.5"/><rect x="14.75" y="5.75" width="2.55" height="12.5" rx=".95"/><rect x="18" y="7.5" width="3.25" height="9" rx="1.15"/></svg><span>Training</span></button>
         <button class="nav-item" data-section="nutrition"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v7M5 3v7M11 3v7M8 10v11M16 3c2 2 3 4.4 3 7v2h-3v9"/></svg><span>Nutrition</span></button>
-        <button class="nav-item" data-section="travel"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-7-7 18-3-8zM8 16l-5 5M9 11l-6-1"/></svg><span>Travel</span></button>
+        <button class="nav-item" data-section="travel"><svg class="nav-icon aircraft-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 14.2 13.5 10V4.25c0-.69-.56-1.25-1.25-1.25h-.5c-.69 0-1.25.56-1.25 1.25V10L3 14.2c-.38.21-.61.61-.61 1.04v.62c0 .4.39.71.78.61L10.5 14.7v4.02l-2.02 1.48c-.28.2-.45.53-.45.88v.35L12 20.1l3.97 1.33v-.35c0-.35-.17-.68-.45-.88L13.5 18.72V14.7l7.33 1.77c.39.1.78-.21.78-.61v-.62c0-.43-.23-.83-.61-1.04Z"/></svg><span>Travel</span></button>
         <button class="nav-item" data-section="calendar"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M7 3v4M17 3v4M3.5 9.5h17M7.5 13h3M13.5 13h3M7.5 16.5h3M13.5 16.5h3"/></svg><span>Calendar</span></button>
         <button class="nav-item" data-section="goals"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2"/></svg><span>Goals</span></button>
       </nav>
@@ -31,8 +31,9 @@
     <main class="main">
       <header class="topbar">
         <button class="mobile-menu" id="mobileMenu" type="button" aria-label="Open navigation" title="Open navigation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-        <div class="mobile-brand">ORBIT</div>
-        <div class="search">⌕ <input aria-label="Search" placeholder="Search flights, workouts, goals…" /></div>
+        <div class="mobile-brand"><span class="mobile-brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/></svg></span><span>ORBIT</span></div>
+        <button class="mobile-search-trigger" id="mobileSearchTrigger" type="button" aria-label="Open search" title="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></button>
+        <div class="search" id="searchBar"><span class="search-glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></span><input id="globalSearch" aria-label="Search" placeholder="Search flights, workouts, goals…" /><button class="search-close" id="searchClose" type="button" aria-label="Close search">×</button></div>
         <div class="top-actions"><button class="icon-btn" title="Notifications">♢</button><button class="icon-btn" id="mobileTheme" title="Appearance">◐</button></div>
       </header>
 

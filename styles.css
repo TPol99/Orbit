@@ -216,3 +216,69 @@ body.nav-collapsed .sidebar-toggle svg { transform:rotate(180deg); }
   .content,.placeholder { padding-inline:12px; }
   .card { border-radius:18px; }
 }
+
+
+/* Orbit v13: mobile header/search, brand and card overflow fixes */
+.brand-mark svg { fill:none; stroke:currentColor; stroke-width:1.7; }
+.mobile-brand { align-items:center; gap:9px; letter-spacing:.25em; }
+.mobile-brand-mark { width:22px; height:22px; display:inline-grid; place-items:center; color:var(--accent); flex:0 0 auto; }
+.mobile-brand-mark svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.7; }
+.mobile-search-trigger { display:none; border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:12px; width:40px; height:40px; padding:0; place-items:center; }
+.mobile-search-trigger svg,.search-glyph svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.search-glyph { display:grid; place-items:center; color:var(--muted); }
+.search-close { display:none; border:0; background:transparent; color:var(--muted); font-size:24px; line-height:1; padding:0 3px; }
+.stat-card > div { min-width:0; }
+.stat-card span,.stat-card small { min-width:0; overflow-wrap:anywhere; }
+.training-main,.training-side,.exercise-library-card,.workout-list-card,.training-next-card,.progress-card { min-width:0; }
+.exercise-library-card .card-head > div { min-width:0; }
+.exercise-library-card .card-head p { margin-bottom:0; }
+@media (max-width:760px) {
+  :root { --topbar-height: calc(72px + env(safe-area-inset-top)); }
+  .main { padding-top:var(--topbar-height); }
+  .topbar {
+    height:var(--topbar-height);
+    padding:env(safe-area-inset-top) 12px 8px;
+    align-items:flex-end;
+    background:color-mix(in srgb,var(--bg) 99%, transparent);
+  }
+  .mobile-brand { display:flex; flex:1; min-width:0; font-size:17px; }
+  .mobile-menu { flex:0 0 40px; }
+  .mobile-search-trigger { display:grid; flex:0 0 40px; }
+  .top-actions { display:none; }
+  .topbar .search {
+    display:none;
+    position:absolute;
+    z-index:90;
+    left:12px;
+    right:12px;
+    bottom:8px;
+    width:auto;
+    max-width:none;
+    height:48px;
+    padding:10px 12px;
+    box-shadow:0 18px 40px rgba(0,0,0,.35);
+  }
+  .topbar.search-open .search { display:flex; }
+  .topbar.search-open .mobile-brand,
+  .topbar.search-open .mobile-menu { opacity:.2; }
+  .topbar.search-open .mobile-search-trigger { display:none; }
+  .topbar.search-open .search-close { display:block; }
+  .topbar.search-open .search input { min-width:0; }
+  .content,.placeholder { padding-top:16px; }
+  .training-stats { grid-template-columns:1fr; }
+  .training-stats .stat-card { min-height:128px; }
+  .training-header-actions { width:100%; }
+  .exercise-library-card .card-head { align-items:flex-start; }
+  .exercise-library-card .card-head .text-btn { flex:0 0 auto; }
+}
+@media (max-width:430px) {
+  .stat-card { grid-template-columns:40px minmax(0,1fr); }
+  .stat-card .icon { width:40px; height:40px; }
+  .stat-card strong { font-size:18px; }
+  .stat-card span,.stat-card small { font-size:12px; line-height:1.35; }
+  .exercise-library-card .card-head { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; }
+  .exercise-library-card .card-head p { max-width:100%; }
+}
+
+/* v13: use the same recognisable aircraft artwork for Travel navigation */
+.aircraft-nav-icon { fill:currentColor; stroke:none; }
