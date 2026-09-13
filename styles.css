@@ -282,3 +282,30 @@ body.nav-collapsed .sidebar-toggle svg { transform:rotate(180deg); }
 
 /* v13: use the same recognisable aircraft artwork for Travel navigation */
 .aircraft-nav-icon { fill:currentColor; stroke:none; }
+
+/* Orbit v14: mobile polish, proper content inset, centred brand and subtle mark glow */
+#training { padding: 10px 30px 36px; max-width: 1450px; margin: 0 auto; width: 100%; }
+.mobile-brand { position:relative; }
+.mobile-brand-mark svg { filter: drop-shadow(0 0 5px rgba(183,162,255,.42)); }
+.mobile-brand-mark { transform: translateY(1px); }
+@media (max-width: 760px) {
+  #training { padding: 16px 14px 30px; max-width: none; }
+  .topbar { position: fixed; top: 0; left: 0; right: 0; }
+  .mobile-brand { position:absolute; left:50%; transform:translateX(-50%); margin:0; z-index:2; white-space:nowrap; }
+  .mobile-brand-mark svg { width:24px; height:24px; }
+  .mobile-brand-mark { width:24px; height:24px; }
+  .topbar.search-open .mobile-brand { opacity:.18; pointer-events:none; }
+  .training-header, .training-layout, .training-stats { min-width: 0; }
+  .training-layout > *, .training-main > *, .training-side > * { width:100%; min-width:0; }
+  .exercise-library-card .card-head { min-width:0; }
+  .exercise-library-card .card-head > div { min-width:0; overflow:hidden; }
+  .exercise-library-card .card-head h2,
+  .exercise-library-card .card-head p { overflow-wrap:anywhere; }
+  .exercise-library-card .card-head .text-btn { white-space:normal; text-align:right; max-width:110px; }
+  .training-next-card, .progress-card, .workout-list-card { overflow:hidden; }
+  .next-workout-body, .progress-body, .workout-list, .empty-state { min-width:0; max-width:100%; overflow-wrap:anywhere; }
+}
+@media (max-width: 430px) {
+  #training { padding-left:12px; padding-right:12px; }
+  .mobile-brand { font-size:16px; letter-spacing:.22em; }
+}
