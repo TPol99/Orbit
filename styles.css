@@ -25,3 +25,27 @@ body[data-theme="light"]{--bg:#f5f4f8;--panel:rgba(255,255,255,.86);--panel2:#ff
 
 /* v6: modal visibility guard — must override .modal-backdrop display:grid */
 .modal-backdrop.hidden { display: none !important; }
+
+
+/* v7: keep interactive travel cards on-theme in every browser */
+.travel-item-button,
+.travel-item-button:focus,
+.travel-item-button:active {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--line);
+  background: var(--panel2);
+  color: var(--text);
+  border-radius: 15px;
+  padding: 12px;
+  margin-top: 8px;
+}
+.travel-item-button:hover {
+  background: color-mix(in srgb, var(--accent) 7%, var(--panel2));
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--line));
+}
+.travel-item-button .trip-info span,
+.travel-item-button .trip-info small {
+  color: var(--muted);
+}
+.dumbbell-icon { stroke-width: 1.9; }
