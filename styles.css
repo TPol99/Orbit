@@ -66,3 +66,53 @@ body[data-theme="light"]{--bg:#f5f4f8;--panel:rgba(255,255,255,.86);--panel2:#ff
 .workout-list-card,.exercise-library-card,.training-next-card,.progress-card{min-width:0;overflow:hidden}
 @media(max-width:1050px){.training-layout{grid-template-columns:1fr}.training-side{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){.training-side{grid-template-columns:1fr}.stat-card>.icon{width:40px;height:40px}}
+
+
+/* Orbit v11 - iOS/Safari polish */
+html { min-height: 100%; background: var(--bg); }
+body { min-height: 100svh; overflow-x: hidden; }
+.main { min-width: 0; }
+.card-icon-svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.quick-grid button .card-icon-svg { width: 22px; height: 22px; margin: 0 auto; }
+
+/* Keep sticky header visually opaque on iOS so scrolled cards never show through it. */
+@media (max-width:760px) {
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    min-height: 68px;
+    height: auto;
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: 10px;
+    background: var(--bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 8px 18px rgba(0,0,0,.18);
+  }
+  .content, .placeholder { padding-top: 14px; }
+  .sidebar {
+    top: env(safe-area-inset-top);
+    bottom: env(safe-area-inset-bottom);
+    height: auto;
+    background: var(--bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .sidebar-bottom { padding-bottom: 6px; }
+  #themeButton { width: 48px; height: 48px; margin-inline: auto; padding: 0; }
+  #themeButton .appearance-status { display: none; }
+  #themeButton .nav-icon { width: 20px; height: 20px; }
+  #mobileTheme { background: var(--panel2); }
+}
+
+/* Avoid browser-default white date/input controls and keep all surfaces on theme. */
+input, textarea, select, button { color-scheme: dark; }
+body[data-theme="light"] input, body[data-theme="light"] textarea, body[data-theme="light"] select, body[data-theme="light"] button { color-scheme: light; }
+@media (prefers-color-scheme: light) {
+  body[data-theme="system"] input, body[data-theme="system"] textarea, body[data-theme="system"] select, body[data-theme="system"] button { color-scheme: light; }
+}
+
+/* Recognisable aircraft icon treatment for travel/flight cards. */
+.travel-card .trip-emoji, .stat-card .icon, .quick-grid button .card-icon-svg { color: var(--accent); }
