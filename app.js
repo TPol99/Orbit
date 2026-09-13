@@ -671,3 +671,21 @@ const finishWorkout=w=>{
 
 document.getElementById('showProgressButton')?.addEventListener('click',()=>showSection('training'));
 renderTraining();
+
+
+// v12 responsive navigation
+const mobileMenu = document.getElementById('mobileMenu');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const navScrim = document.getElementById('navScrim');
+const openMobileNav = () => { document.body.classList.add('mobile-nav-open'); navScrim?.classList.remove('hidden'); };
+const closeMobileNav = () => { document.body.classList.remove('mobile-nav-open'); navScrim?.classList.add('hidden'); };
+mobileMenu?.addEventListener('click', openMobileNav);
+navScrim?.addEventListener('click', closeMobileNav);
+sidebarToggle?.addEventListener('click', () => {
+  if (window.innerWidth <= 760) { closeMobileNav(); return; }
+  document.body.classList.toggle('nav-collapsed');
+  localStorage.setItem('orbit-nav-collapsed', document.body.classList.contains('nav-collapsed') ? '1' : '0');
+});
+if (localStorage.getItem('orbit-nav-collapsed') === '1' && window.innerWidth > 760) document.body.classList.add('nav-collapsed');
+window.addEventListener('resize', () => { if (window.innerWidth > 760) closeMobileNav(); });
+document.querySelectorAll('.nav-item[data-section]').forEach(button => button.addEventListener('click', closeMobileNav));

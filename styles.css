@@ -116,3 +116,103 @@ body[data-theme="light"] input, body[data-theme="light"] textarea, body[data-the
 
 /* Recognisable aircraft icon treatment for travel/flight cards. */
 .travel-card .trip-emoji, .stat-card .icon, .quick-grid button .card-icon-svg { color: var(--accent); }
+
+
+/* Orbit v12: responsive navigation + iOS layout overhaul */
+:root { --sidebar-width: 230px; --topbar-height: 78px; }
+body { overflow-x: hidden; }
+.sidebar { width: var(--sidebar-width); transition: width .22s ease, transform .22s ease; }
+.brand { position: relative; min-height: 28px; }
+.brand-mark { width: 23px; height: 23px; display:grid; place-items:center; color:var(--accent); flex:0 0 auto; }
+.brand-mark svg { width: 23px; height:23px; fill: currentColor; }
+.sidebar-toggle { margin-left:auto; width:30px; height:30px; padding:0; border:1px solid var(--line); background:var(--panel2); color:var(--muted); border-radius:9px; display:grid; place-items:center; cursor:pointer; }
+.sidebar-toggle svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; transition:transform .22s ease; }
+.main { margin-left:var(--sidebar-width); width:calc(100% - var(--sidebar-width)); min-width:0; padding-top:var(--topbar-height); }
+.topbar { position:fixed; top:0; left:var(--sidebar-width); right:0; width:auto; height:var(--topbar-height); transition:left .22s ease; z-index:40; background:color-mix(in srgb,var(--bg) 96%,transparent); border-bottom:1px solid var(--line); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); }
+.content,.placeholder { position:relative; }
+.card-icon-svg.aircraft-icon { stroke-width:1.75; }
+.trip-emoji .aircraft-icon { width:25px; height:25px; }
+.stat-card .card-icon-svg { width:22px; height:22px; }
+.nav-scrim { display:none; }
+.mobile-menu { display:none; }
+
+body.nav-collapsed { --sidebar-width: 78px; }
+body.nav-collapsed .brand { justify-content:center; padding-inline:6px; }
+body.nav-collapsed .brand > span:last-of-type,
+body.nav-collapsed .nav-item > span,
+body.nav-collapsed .profile-chip > div:not(.avatar),
+body.nav-collapsed .appearance-status { display:none; }
+body.nav-collapsed .sidebar { padding-inline:10px; }
+body.nav-collapsed .nav-item { justify-content:center; padding-inline:8px; }
+body.nav-collapsed .profile-chip { justify-content:center; }
+body.nav-collapsed .sidebar-toggle { margin-left:0; }
+body.nav-collapsed .sidebar-toggle svg { transform:rotate(180deg); }
+
+@media (max-width: 900px) {
+  :root { --sidebar-width: 78px; --topbar-height: 72px; }
+  .sidebar { width:78px; }
+  .main { margin-left:78px; width:calc(100% - 78px); }
+  .topbar { left:78px; }
+  .sidebar .brand { justify-content:center; padding-inline:6px; }
+  .sidebar .brand > span:last-of-type,
+  .sidebar .nav-item > span,
+  .sidebar .profile-chip > div:not(.avatar),
+  .sidebar .appearance-status { display:none; }
+  .sidebar .nav-item { justify-content:center; padding-inline:8px; }
+  .sidebar .profile-chip { justify-content:center; }
+  .sidebar-toggle { display:none; }
+  .four { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .main-grid { grid-template-columns:1fr 1fr; }
+}
+
+@media (max-width: 760px) {
+  :root { --sidebar-width: 0px; --topbar-height: 72px; }
+  .app-shell { min-height:100svh; }
+  .sidebar { width:min(82vw,320px); transform:translateX(-105%); top:0; bottom:0; inset-inline-start:0; padding-top:calc(env(safe-area-inset-top) + 18px); padding-bottom:calc(env(safe-area-inset-bottom) + 18px); z-index:70; box-shadow:20px 0 50px rgba(0,0,0,.35); }
+  body.mobile-nav-open .sidebar { transform:translateX(0); }
+  .sidebar .brand { justify-content:flex-start; padding-inline:10px; }
+  .sidebar .brand > span:last-of-type,
+  .sidebar .nav-item > span,
+  .sidebar .profile-chip > div:not(.avatar),
+  .sidebar .appearance-status { display:block; }
+  .sidebar .nav-item { justify-content:flex-start; padding:12px 14px; }
+  .sidebar .profile-chip { justify-content:flex-start; }
+  .sidebar-toggle { display:grid; margin-left:auto; }
+  .nav-scrim { display:block; position:fixed; inset:0; background:rgba(0,0,0,.52); backdrop-filter:blur(3px); z-index:60; }
+  .nav-scrim.hidden { display:none; }
+  .main { margin-left:0; width:100%; padding-top:var(--topbar-height); }
+  .topbar { left:0; right:0; width:100%; min-height:72px; height:72px; padding:calc(env(safe-area-inset-top) + 8px) 12px 8px; gap:9px; }
+  .mobile-menu { display:grid; place-items:center; width:40px; height:40px; flex:0 0 40px; border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:12px; }
+  .mobile-menu svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; }
+  .mobile-brand { display:none; }
+  .topbar .search { flex:1; width:auto; max-width:none; min-width:0; }
+  .content,.placeholder { padding:16px 14px 30px; }
+  .content > *, .placeholder > * { max-width:100%; min-width:0; }
+  .hero { min-height:auto; padding:22px; }
+  .hero h1 { font-size:29px; line-height:1.08; }
+  .hero-orbit { display:none; }
+  .four,.main-grid { grid-template-columns:1fr; }
+  .calendar,.flights { grid-column:auto; }
+  .stat-card { min-height:132px; }
+  .travel-item { grid-template-columns:48px minmax(0,1fr); }
+  .trip-badge { grid-column:2; justify-self:start; }
+  .training-header { display:block; }
+  .training-header h1 { font-size:32px; line-height:1.08; }
+  .training-header-actions { display:grid; grid-template-columns:1fr; }
+  .training-header-actions button { width:100%; }
+  .training-stats { grid-template-columns:1fr 1fr; }
+  .training-layout { grid-template-columns:1fr; }
+  .exercise-library { grid-template-columns:1fr; }
+  .workout-row { grid-template-columns:auto minmax(0,1fr); }
+  .workout-row .workout-actions { grid-column:2; justify-self:start; }
+  .exercise-card { grid-template-columns:64px minmax(0,1fr); }
+  .exercise-media { width:64px; height:64px; }
+}
+
+@media (max-width: 430px) {
+  .training-stats { grid-template-columns:1fr; }
+  .stat-card { min-height:118px; }
+  .training-header h1 { font-size:29px; }
+  .content,.placeholder { padding-inline:12px; }
+  .card { border-radius:18px; }
+}
