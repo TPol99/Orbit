@@ -500,7 +500,7 @@ renderHomeTravel();
 
 
 // v6 launch-state and modal safety
-const orbitModals = ['flightModal', 'tripModal', 'tripDetailModal', 'itemModal']
+const orbitModals = ['flightModal', 'tripModal', 'tripDetailModal', 'itemModal', 'workoutModal', 'exerciseModal', 'workoutDetailModal']
   .map(id => document.getElementById(id))
   .filter(Boolean);
 
@@ -523,3 +523,151 @@ orbitModals.forEach(modal => {
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeAllOrbitModals();
 });
+
+
+// --- Orbit Training module ---
+const workoutStorageKey = 'orbit-workouts';
+const exerciseStorageKey = 'orbit-exercises';
+const trainingLogsKey = 'orbit-training-logs';
+
+const readJSON = (key, fallback=[]) => { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch { return fallback; } };
+const writeJSON = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+const workouts = () => readJSON(workoutStorageKey);
+const exercises = () => readJSON(exerciseStorageKey);
+const trainingLogs = () => readJSON(trainingLogsKey);
+
+const uid2 = (prefix='id') => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+const fmtWeight = n => Number(n || 0).toLocaleString(undefined,{maximumFractionDigits:1});
+const weekStart = () => { const d=new Date(); const day=(d.getDay()+6)%7; d.setHours(0,0,0,0); d.setDate(d.getDate()-day); return d; };
+const dateLabel = iso => iso ? new Date(`${iso}T12:00:00`).toLocaleDateString('en-AU',{day:'2-digit',month:'short'}) : '';
+
+const seedExercises = () => {
+  if (exercises().length) return;
+  writeJSON(exerciseStorageKey,[
+    {id:uid2('ex'),name:'Lat Pulldown',muscle:'Back',equipment:'Cable',mediaUrl:'',instructions:'Keep your chest tall and pull elbows down towards your sides.'},
+    {id:uid2('ex'),name:'Seated Cable Row',muscle:'Back',equipment:'Cable',mediaUrl:'',instructions:'Brace your torso and drive elbows back without swinging.'},
+    {id:uid2('ex'),name:'Incline Dumbbell Press',muscle:'Chest',equipment:'Dumbbells',mediaUrl:'',instructions:'Keep shoulder blades set and lower the dumbbells under control.'},
+    {id:uid2('ex'),name:'Dumbbell Curl',muscle:'Biceps',equipment:'Dumbbells',mediaUrl:'',instructions:'Keep elbows close to your body and avoid swinging.'}
+  ]);
+};
+seedExercises();
+
+const workoutModal = document.getElementById('workoutModal');
+const exerciseModal = document.getElementById('exerciseModal');
+const workoutDetailModal = document.getElementById('workoutDetailModal');
+const workoutForm = document.getElementById('workoutForm');
+const exerciseForm = document.getElementById('exerciseForm');
+let activeWorkoutId = null;
+
+const openTrainingModal = m => { m?.classList.remove('hidden'); m?.setAttribute('aria-hidden','false'); };
+const closeTrainingModal = m => { m?.classList.add('hidden'); m?.setAttribute('aria-hidden','true'); };
+
+document.getElementById('createWorkoutButton')?.addEventListener('click',()=>{ workoutForm?.reset(); openTrainingModal(workoutModal); workoutForm?.elements.name?.focus(); });
+document.getElementById('emptyCreateWorkout')?.addEventListener('click',()=>{ workoutForm?.reset(); openTrainingModal(workoutModal); });
+document.querySelectorAll('[data-close-workout]').forEach(b=>b.addEventListener('click',()=>closeTrainingModal(workoutModal)));
+document.querySelectorAll('[data-close-exercise]').forEach(b=>b.addEventListener('click',()=>closeTrainingModal(exerciseModal)));
+document.querySelectorAll('[data-close-workout-detail]').forEach(b=>b.addEventListener('click',()=>closeTrainingModal(workoutDetailModal)));
+
+document.getElementById('addExerciseButton')?.addEventListener('click',()=>{ exerciseForm?.reset(); document.getElementById('exerciseMediaPreview')?.classList.add('hidden'); openTrainingModal(exerciseModal); exerciseForm?.elements.name?.focus(); });
+document.getElementById('libraryAddExercise')?.addEventListener('click',()=>document.getElementById('addExerciseButton')?.click());
+exerciseForm?.elements.mediaUrl?.addEventListener('input',()=>{
+  const box=document.getElementById('exerciseMediaPreview'); const url=exerciseForm.elements.mediaUrl.value.trim();
+  if(!url){box.classList.add('hidden'); box.innerHTML=''; return;}
+  const safe=escapeHtml(url); const lower=url.toLowerCase();
+  box.innerHTML=(lower.endsWith('.mp4')||lower.includes('video'))?`<video src="${safe}" controls muted playsinline></video>`:`<img src="${safe}" alt="Exercise demonstration preview" onerror="this.closest('.media-preview').innerHTML='<span class=\"muted\">Preview unavailable — the URL will still be saved.</span>'">`;
+  box.classList.remove('hidden');
+});
+
+workoutForm?.addEventListener('submit',e=>{
+  e.preventDefault(); const d=Object.fromEntries(new FormData(workoutForm).entries());
+  const all=workouts(); all.push({id:uid2('workout'),name:d.name.trim(),duration:Number(d.duration||0),notes:d.notes?.trim()||'',exerciseIds:[],createdAt:new Date().toISOString()});
+  writeJSON(workoutStorageKey,all); closeTrainingModal(workoutModal); renderTraining(); openWorkoutDetail(all[all.length-1].id);
+});
+
+exerciseForm?.addEventListener('submit',e=>{
+  e.preventDefault(); const d=Object.fromEntries(new FormData(exerciseForm).entries()); const all=exercises();
+  all.push({id:uid2('ex'),name:d.name.trim(),muscle:d.muscle?.trim()||'General',equipment:d.equipment?.trim()||'—',mediaUrl:d.mediaUrl?.trim()||'',instructions:d.instructions?.trim()||''});
+  writeJSON(exerciseStorageKey,all); closeTrainingModal(exerciseModal); renderTraining();
+});
+
+const renderExerciseMedia = ex => {
+  if(!ex.mediaUrl) return `<div class="exercise-media"><span class="media-placeholder">🏋️</span></div>`;
+  const u=escapeHtml(ex.mediaUrl); const low=ex.mediaUrl.toLowerCase();
+  if(low.endsWith('.mp4')||low.includes('video')) return `<div class="exercise-media"><video src="${u}" muted loop autoplay playsinline></video></div>`;
+  return `<div class="exercise-media"><img src="${u}" alt="${escapeHtml(ex.name)} demonstration" onerror="this.parentElement.innerHTML='<span class=\"media-placeholder\">🏋️</span>'"></div>`;
+};
+
+const renderTraining = () => {
+  const ws=workouts(); const ex=exercises(); const logs=trainingLogs();
+  const week=weekStart();
+  const weekLogs=logs.filter(l=>new Date(l.date)>=week);
+  const volume=weekLogs.reduce((sum,l)=>sum+(l.sets||[]).reduce((s,x)=>s+(Number(x.weight)||0)*(Number(x.reps)||0),0),0);
+  const pbCount=logs.reduce((n,l)=>n+(l.pbCount||0),0);
+  document.getElementById('trainingWeekCount').textContent=weekLogs.length;
+  document.getElementById('trainingVolumeLabel').textContent=`${fmtWeight(volume)} kg volume`;
+  document.getElementById('trainingPBs').textContent=pbCount;
+  document.getElementById('trainingStreak').textContent=calcStreak(logs);
+  const last=[...logs].sort((a,b)=>b.date.localeCompare(a.date))[0];
+  document.getElementById('trainingLastWorkout').textContent=last?dateLabel(last.date):'—';
+  document.getElementById('trainingLastWorkoutSub').textContent=last?last.name:'Nothing logged yet';
+  document.getElementById('workoutCountLabel').textContent=`${ws.length} saved`;
+  const wl=document.getElementById('workoutList'), empty=document.getElementById('emptyWorkouts');
+  empty.classList.toggle('hidden',ws.length>0);
+  wl.innerHTML=ws.map(w=>`<article class="workout-row"><div class="workout-icon"><svg class="card-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8v8M4.5 10v4M9.5 7v10M17 8v8M19.5 10v4M14.5 7v10M9.5 12h5"/></svg></div><div><h3>${escapeHtml(w.name)}</h3><p>${w.exerciseIds.length} exercises${w.duration?` · ${w.duration} min`:''}${w.notes?` · ${escapeHtml(w.notes)}`:''}</p></div><div class="workout-actions"><button class="secondary small" data-open-workout="${w.id}">Open</button><button class="icon-btn danger" title="Delete workout" data-delete-workout="${w.id}">×</button></div></article>`).join('');
+  wl.querySelectorAll('[data-open-workout]').forEach(b=>b.addEventListener('click',()=>openWorkoutDetail(b.dataset.openWorkout)));
+  wl.querySelectorAll('[data-delete-workout]').forEach(b=>b.addEventListener('click',()=>{writeJSON(workoutStorageKey,workouts().filter(w=>w.id!==b.dataset.deleteWorkout));renderTraining();}));
+  const lib=document.getElementById('exerciseLibrary');
+  lib.innerHTML=ex.map(e=>`<article class="exercise-card">${renderExerciseMedia(e)}<div><h3>${escapeHtml(e.name)}</h3><p>${escapeHtml(e.muscle)} · ${escapeHtml(e.equipment)}</p><small>${escapeHtml(e.instructions||'Add form cues in the exercise editor.')}</small></div></article>`).join('');
+  const nw=ws[0]; document.getElementById('nextWorkoutMeta').textContent=nw?`${nw.exerciseIds.length} exercises`:'';
+  document.getElementById('nextWorkoutBody').innerHTML=nw?`<div class="next-workout-name">${escapeHtml(nw.name)}</div><div class="next-workout-meta"><span>${nw.exerciseIds.length} exercises</span>${nw.duration?`<span>~${nw.duration} min</span>`:''}</div><button class="primary small training-side-button" data-start-next="${nw.id}">Start workout</button>`:`<div class="muted">Create a workout to get started.</div>`;
+  document.querySelector('[data-start-next]')?.addEventListener('click',e=>openWorkoutDetail(e.currentTarget.dataset.startNext));
+  renderProgress(logs);
+};
+
+const calcStreak=logs=>{ const set=new Set(logs.map(l=>l.date)); let d=new Date(); d.setHours(0,0,0,0); let count=0; while(set.has(d.toISOString().slice(0,10))){count++;d.setDate(d.getDate()-1);} return count; };
+const renderProgress=logs=>{
+  const map={}; logs.forEach(l=>(l.sets||[]).forEach(s=>{const k=l.exerciseId||s.exerciseId;if(!map[k])map[k]={best:0,last:0,name:l.exerciseName||'Exercise'}; const v=Number(s.weight)||0; map[k].best=Math.max(map[k].best,v);map[k].last=v;}));
+  const arr=Object.values(map).sort((a,b)=>b.best-a.best).slice(0,5); const box=document.getElementById('progressBody');
+  box.innerHTML=arr.length?arr.map(x=>`<div class="progress-row"><div><strong>${escapeHtml(x.name)}</strong><span>${fmtWeight(x.best)} kg best</span></div><div class="progress-mini-track"><span style="width:${Math.min(100,Math.max(8,(x.best/(Math.max(x.best,100)))*100))}%"></span></div></div>`).join(''):`<div class="muted">Log your first workout and your exercise progress will appear here.</div>`;
+};
+
+const openWorkoutDetail=id=>{
+  const w=workouts().find(x=>x.id===id); if(!w)return; activeWorkoutId=id;
+  document.getElementById('workoutDetailTitle').textContent=w.name; document.getElementById('workoutDetailSubline').textContent=`${w.exerciseIds.length} exercises${w.duration?` · ~${w.duration} min`:''}`;
+  renderWorkoutDetail(w); openTrainingModal(workoutDetailModal);
+};
+
+const renderWorkoutDetail=w=>{
+  const exs=exercises();
+  const exerciseCards=w.exerciseIds.map(id=>{
+    const ex=exs.find(x=>x.id===id); if(!ex)return '';
+    return `<article class="workout-exercise" data-workout-exercise="${ex.id}"><div class="workout-exercise-head"><div><h3>${escapeHtml(ex.name)}</h3><div class="muted">${escapeHtml(ex.muscle)} · ${escapeHtml(ex.equipment)}</div></div><button class="icon-btn danger" data-remove-exercise="${ex.id}" title="Remove">×</button></div><table class="set-table"><thead><tr><th>Set</th><th>Weight (kg)</th><th>Reps</th><th>Done</th></tr></thead><tbody>${[0,1,2].map((_,i)=>`<tr><td>${i+1}</td><td><input class="set-input" inputmode="decimal" data-weight data-index="${i}" value=""></td><td><input class="set-input" inputmode="numeric" data-reps data-index="${i}" value=""></td><td><input type="checkbox" data-done data-index="${i}"></td></tr>`).join('')}</tbody></table><div class="set-actions"><button class="secondary small" data-add-set="${ex.id}">+ Add set</button><span class="muted" data-last-stat="${ex.id}"></span></div></article>`;
+  }).join('');
+  document.getElementById('workoutDetailBody').innerHTML=`<div class="workout-detail-toolbar"><strong>${w.exerciseIds.length} exercises</strong><button class="secondary small" id="addExerciseToWorkout">+ Add exercise</button></div>${exerciseCards || '<div class="empty-state"><strong>No exercises yet</strong><p class="muted">Add exercises to this workout.</p></div>'}<div class="modal-actions"><button class="primary" id="finishWorkout">Finish & save workout</button></div>`;
+  document.getElementById('addExerciseToWorkout')?.addEventListener('click',()=>showExercisePicker(w));
+  document.querySelectorAll('[data-remove-exercise]').forEach(b=>b.addEventListener('click',()=>{w.exerciseIds=w.exerciseIds.filter(x=>x!==b.dataset.removeExercise);persistWorkout(w);renderWorkoutDetail(w);}));
+  document.getElementById('finishWorkout')?.addEventListener('click',()=>finishWorkout(w));
+  document.querySelectorAll('[data-add-set]').forEach(b=>b.addEventListener('click',()=>{
+    const card=b.closest('.workout-exercise'); const tbody=card.querySelector('tbody'); const idx=tbody.children.length; const tr=document.createElement('tr'); tr.innerHTML=`<td>${idx+1}</td><td><input class="set-input" inputmode="decimal" data-weight data-index="${idx}"></td><td><input class="set-input" inputmode="numeric" data-reps data-index="${idx}"></td><td><input type="checkbox" data-done data-index="${idx}"></td>`; tbody.appendChild(tr);
+  }));
+};
+const persistWorkout=w=>writeJSON(workoutStorageKey,workouts().map(x=>x.id===w.id?w:x));
+const showExercisePicker=w=>{
+  const exs=exercises(); const overlay=document.createElement('div'); overlay.className='exercise-picker';
+  overlay.innerHTML=exs.map(e=>`<button class="secondary" type="button" data-pick="${e.id}"><span>${escapeHtml(e.name)}</span><small>${escapeHtml(e.muscle)}</small></button>`).join('');
+  const detail=document.getElementById('workoutDetailBody'); const toolbar=detail.querySelector('.workout-detail-toolbar'); toolbar.after(overlay); overlay.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>{if(!w.exerciseIds.includes(b.dataset.pick)){w.exerciseIds.push(b.dataset.pick);persistWorkout(w);renderWorkoutDetail(w);}}));
+};
+const finishWorkout=w=>{
+  const cards=[...document.querySelectorAll('.workout-exercise')]; let pbCount=0;
+  cards.forEach(card=>{
+    const exId=card.dataset.workoutExercise; const ex=exercises().find(x=>x.id===exId); if(!ex)return;
+    let sets=[]; [...card.querySelectorAll('tbody tr')].forEach((tr,i)=>{const weight=Number(tr.querySelector('[data-weight]')?.value||0);const reps=Number(tr.querySelector('[data-reps]')?.value||0);const done=!!tr.querySelector('[data-done]')?.checked;if(done && (weight||reps))sets.push({weight,reps,done});});
+    if(sets.length){const existing=trainingLogs().filter(l=>l.exerciseId===exId).flatMap(l=>l.sets||[]).reduce((m,s)=>Math.max(m,Number(s.weight)||0),0);const best=Math.max(...sets.map(s=>Number(s.weight)||0));if(best>existing)pbCount++; writeJSON(trainingLogsKey,[...trainingLogs(),{id:uid2('log'),date:new Date().toISOString().slice(0,10),name:w.name,exerciseId:exId,exerciseName:ex.name,sets}]);}
+  });
+  renderTraining(); closeTrainingModal(workoutDetailModal);
+  const count=trainingLogs().filter(l=>l.date===new Date().toISOString().slice(0,10)).length;
+  alert(`Workout saved.${pbCount?` ${pbCount} new PB${pbCount===1?'':'s'}!`:''} ${count} exercise${count===1?'':'s'} logged.`);
+};
+
+document.getElementById('showProgressButton')?.addEventListener('click',()=>showSection('training'));
+renderTraining();

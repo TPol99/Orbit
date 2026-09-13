@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b0b10" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Orbit v6</title>
+  <title>Orbit v10</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -42,10 +42,10 @@
         </div>
 
         <div class="grid four">
-          <article class="card stat-card"><span class="icon">□</span><div><strong>3</strong><span>events today</span></div><small>Next · 09:00</small></article>
-          <article class="card stat-card"><span class="icon">✚</span><div><strong>Pull Day</strong><span>6 exercises · ~55 min</span></div><button class="primary small">Start workout</button></article>
-          <article class="card stat-card"><span class="icon">✈</span><div><strong>Greece</strong><span>Upcoming travel</span></div><small>12 days · 26 Jun – 7 Jul</small></article>
-          <article class="card stat-card"><span class="icon">✓</span><div><strong>3</strong><span>tasks remaining</span></div><small>1 high priority</small></article>
+          <article class="card stat-card"><span class="icon"><svg class="card-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M7 3v4M17 3v4M3.5 9.5h17M7.5 13h3M13.5 13h3M7.5 16.5h3M13.5 16.5h3"/></svg></span><div><strong>3</strong><span>events today</span></div><small>Next · 09:00</small></article>
+          <article class="card stat-card"><span class="icon"><svg class="card-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8v8M4.5 10v4M9.5 7v10M17 8v8M19.5 10v4M14.5 7v10M9.5 12h5"/></svg></span><div><strong>Pull Day</strong><span>6 exercises · ~55 min</span></div><button class="primary small">Start workout</button></article>
+          <article class="card stat-card"><span class="icon"><svg class="card-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10.5 7.2-1.9L13.8 4c.4-.8 1.3-1.1 2-.8l1 .5-1.6 4.9 4.8 2.1c.7.3 1.1 1 .9 1.8l-.2.8-6.6-1.3-2.4 6.6-1.8-.4.3-6.5-5.3-1-.6-2.2z"/></svg></span><div><strong>Greece</strong><span>Upcoming travel</span></div><small>12 days · 26 Jun – 7 Jul</small></article>
+          <article class="card stat-card"><span class="icon"><svg class="card-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 2.3 2.3L16 8.7"/></svg></span><div><strong>3</strong><span>tasks remaining</span></div><small>1 high priority</small></article>
         </div>
 
         <div class="grid main-grid">
@@ -54,11 +54,55 @@
           <article class="card calendar"><div class="card-head"><h2>Today</h2><button class="text-btn">Calendar</button></div><div class="timeline"><div><time>09:00</time><span>AOT Daily</span></div><div><time>13:30</time><span>Project meeting</span></div><div><time>18:00</time><span>Gym · Pull Day</span></div></div></article>
           <article class="card progress"><div class="card-head"><h2>Training progress</h2><span>🔥 12 day streak</span></div><div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><p><strong>4 workouts</strong> this week · <strong>+7%</strong> volume</p></article>
           <article class="card goal"><div class="card-head"><h2>Current goal</h2><span>84%</span></div><strong class="goal-title">Bench 100 kg</strong><div class="progress-track"><span style="width:84%"></span></div><small>84 / 100 kg</small></article>
-          <article class="card quick"><div class="card-head"><h2>Quick add</h2></div><div class="quick-grid"><button>＋<span>Workout</span></button><button>＋<span>Meal</span></button><button>＋<span>Task</span></button><button>＋<span>Event</span></button><button data-add-flight type="button">✈<span>Add flight</span></button><button>＋<span>Goal</span></button></div></article>
+          <article class="card quick"><div class="card-head"><h2>Quick add</h2></div><div class="quick-grid"><button>＋<span>Workout</span></button><button>＋<span>Meal</span></button><button>＋<span>Task</span></button><button>＋<span>Event</span></button><button data-add-flight type="button"><svg class="card-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10.5 7.2-1.9L13.8 4c.4-.8 1.3-1.1 2-.8l1 .5-1.6 4.9 4.8 2.1c.7.3 1.1 1 .9 1.8l-.2.8-6.6-1.3-2.4 6.6-1.8-.4.3-6.5-5.3-1-.6-2.2z"/></svg><span>Add flight</span></button><button>＋<span>Goal</span></button></div></article>
         </div>
       </section>
 
-      <section class="placeholder hidden" id="training"><div class="card"><p class="eyebrow">Module</p><h1>Training</h1><p class="muted">Workout builder, exercise library, GIF demonstrations, sets, reps, weights, rest timers and progression history will live here.</p></div></section>
+      <section class="hidden" id="training">
+  <div class="training-header">
+    <div>
+      <p class="eyebrow">Training</p>
+      <h1>Gym Command Centre</h1>
+      <p class="muted">Build workouts, log every set, keep exercise demonstrations handy, and watch your progress.</p>
+    </div>
+    <div class="training-header-actions">
+      <button class="secondary" type="button" id="addExerciseButton">+ Add exercise</button>
+      <button class="primary" type="button" id="createWorkoutButton">+ Create workout</button>
+    </div>
+  </div>
+
+  <div class="grid four training-stats">
+    <article class="card stat-card"><span class="icon"><svg class="card-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8v8M4.5 10v4M9.5 7v10M17 8v8M19.5 10v4M14.5 7v10M9.5 12h5"/></svg></span><div><strong id="trainingWeekCount">0</strong><span>workouts this week</span></div><small id="trainingVolumeLabel">0 kg volume</small></article>
+    <article class="card stat-card"><span class="icon"><svg class="card-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.2 3.5c.8 3.2-1.1 4.8-2.6 6.1-1.6 1.4-2.9 2.5-2.5 5.2.4 2.4 2.4 4 4.8 4 3.4 0 5.6-2.4 5.6-5.7 0-2.4-1.5-5.2-5.3-9.6z"/></svg></span><div><strong id="trainingStreak">0</strong><span>day streak</span></div><small>Keep it going</small></article>
+    <article class="card stat-card"><span class="icon"><svg class="card-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h10v8a5 5 0 0 1-5 5h0a5 5 0 0 1-5-5zM16 7h2a2.5 2.5 0 0 1 0 5h-2M8 21h8"/></svg></span><div><strong id="trainingPBs">0</strong><span>PBs logged</span></div><small>Personal bests</small></article>
+    <article class="card stat-card"><span class="icon"><svg class="card-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7.5"/><path d="M12 13V9M9 3h6M12 5.5V3"/></svg></span><div><strong id="trainingLastWorkout">—</strong><span>last workout</span></div><small id="trainingLastWorkoutSub">Nothing logged yet</small></article>
+  </div>
+
+  <div class="training-layout">
+    <div class="training-main">
+      <article class="card workout-list-card">
+        <div class="card-head"><h2>Your workouts</h2><span id="workoutCountLabel" class="muted"></span></div>
+        <div id="workoutList" class="workout-list"></div>
+        <div id="emptyWorkouts" class="empty-state training-empty"><div class="empty-icon">🏋️</div><strong>No workouts yet</strong><span>Create your first workout and start building your routine.</span><button class="secondary" id="emptyCreateWorkout" type="button">Create a workout</button></div>
+      </article>
+      <article class="card exercise-library-card">
+        <div class="card-head"><div><h2>Exercise library</h2><p class="muted">Save your favourites with a GIF or video for quick technique help.</p></div><button class="text-btn" id="libraryAddExercise" type="button">+ Add exercise</button></div>
+        <div id="exerciseLibrary" class="exercise-library"></div>
+      </article>
+    </div>
+
+    <aside class="training-side">
+      <article class="card training-next-card">
+        <div class="card-head"><h2>Next workout</h2><span id="nextWorkoutMeta" class="muted"></span></div>
+        <div id="nextWorkoutBody" class="next-workout-body"></div>
+      </article>
+      <article class="card progress-card">
+        <div class="card-head"><h2>Progress</h2><button class="text-btn" id="showProgressButton" type="button">View history</button></div>
+        <div id="progressBody" class="progress-body"></div>
+      </article>
+    </aside>
+  </div>
+</section>
       <section class="placeholder hidden" id="nutrition"><div class="card"><p class="eyebrow">Module</p><h1>Nutrition</h1><p class="muted">Meals, protein, calories and daily targets.</p></div></section>
       <section class="placeholder hidden" id="travel">
         <div class="card travel-page-card">
@@ -73,6 +117,44 @@
       <section class="placeholder hidden" id="calendar"><div class="card"><p class="eyebrow">Module</p><h1>Calendar</h1><p class="muted">Outlook integration will connect here later.</p></div></section>
       <section class="placeholder hidden" id="goals"><div class="card"><p class="eyebrow">Module</p><h1>Goals</h1><p class="muted">Long-term targets with progress and milestones.</p></div></section>
     </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="workoutModal" aria-hidden="true">
+    <div class="modal card training-modal" role="dialog" aria-modal="true" aria-labelledby="workoutModalTitle">
+      <div class="modal-head"><div><p class="eyebrow">Training</p><h2 id="workoutModalTitle">Create workout</h2></div><button class="icon-btn" type="button" data-close-workout aria-label="Close">×</button></div>
+      <form id="workoutForm" class="trip-form">
+        <div class="manual-grid">
+          <label>Workout name<input name="name" placeholder="Pull Day" required></label>
+          <label>Target duration<input name="duration" type="number" min="1" placeholder="55"><span class="field-help">Minutes (optional)</span></label>
+          <label class="full">Notes<textarea name="notes" rows="3" placeholder="Anything to remember next session…"></textarea></label>
+        </div>
+        <div class="modal-actions"><button class="secondary" type="button" data-close-workout>Cancel</button><button class="primary" type="submit">Create workout</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="exerciseModal" aria-hidden="true">
+    <div class="modal card training-modal" role="dialog" aria-modal="true" aria-labelledby="exerciseModalTitle">
+      <div class="modal-head"><div><p class="eyebrow">Exercise library</p><h2 id="exerciseModalTitle">Add exercise</h2></div><button class="icon-btn" type="button" data-close-exercise aria-label="Close">×</button></div>
+      <form id="exerciseForm" class="trip-form">
+        <div class="manual-grid">
+          <label>Exercise name<input name="name" placeholder="Incline Dumbbell Press" required></label>
+          <label>Target muscle<input name="muscle" placeholder="Chest"></label>
+          <label>Equipment<input name="equipment" placeholder="Dumbbells"></label>
+          <label>Demonstration URL<input name="mediaUrl" placeholder="https://…"><span class="field-help">GIF, MP4 or image URL</span></label>
+          <label class="full">Instructions<textarea name="instructions" rows="3" placeholder="Key form cues or reminders…"></textarea></label>
+        </div>
+        <div id="exerciseMediaPreview" class="media-preview hidden"></div>
+        <div class="modal-actions"><button class="secondary" type="button" data-close-exercise>Cancel</button><button class="primary" type="submit">Save exercise</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="workoutDetailModal" aria-hidden="true">
+    <div class="modal card training-modal workout-detail-modal" role="dialog" aria-modal="true" aria-labelledby="workoutDetailTitle">
+      <div class="modal-head"><div><p class="eyebrow">Workout</p><h2 id="workoutDetailTitle">Workout</h2><p class="muted" id="workoutDetailSubline"></p></div><button class="icon-btn" type="button" data-close-workout-detail aria-label="Close">×</button></div>
+      <div id="workoutDetailBody" class="workout-detail-body"></div>
+    </div>
   </div>
 
       <div class="modal-backdrop hidden" id="flightModal" aria-hidden="true">
