@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b0b10" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Orbit v15</title>
+  <title>Orbit v17</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -88,7 +88,13 @@
         <div id="emptyWorkouts" class="empty-state training-empty"><div class="empty-icon">🏋️</div><strong>No workouts yet</strong><span>Create your first workout and start building your routine.</span><button class="secondary" id="emptyCreateWorkout" type="button">Create a workout</button></div>
       </article>
       <article class="card exercise-library-card">
-        <div class="card-head"><div><h2>Exercise library</h2><p class="muted">Save your favourites with a GIF or video for quick technique help.</p></div><button class="text-btn" id="libraryAddExercise" type="button">+ Add exercise</button></div>
+        <div class="card-head"><div><h2>Exercise database</h2><p class="muted">Search 899+ structured exercises by name, muscle or equipment, then add favourites to Orbit.</p></div><button class="text-btn" id="libraryAddExercise" type="button">+ Add custom</button></div>
+        <div class="exercise-db-controls">
+          <label class="exercise-search"><span class="search-glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></span><input id="exerciseDbSearch" type="search" placeholder="Search exercises…" autocomplete="off"></label>
+          <select id="exerciseDbMuscle" aria-label="Filter by muscle"><option value="">All muscles</option></select>
+          <select id="exerciseDbEquipment" aria-label="Filter by equipment"><option value="">All equipment</option></select>
+        </div>
+        <div class="exercise-db-status muted" id="exerciseDbStatus">Loading exercise database…</div>
         <div id="exerciseLibrary" class="exercise-library"></div>
       </article>
     </div>
@@ -272,6 +278,40 @@
           </form>
         </div>
       </div>
+
+
+  <div class="modal-backdrop hidden live-workout-backdrop" id="liveWorkoutModal" aria-hidden="true">
+    <div class="live-workout-shell" role="dialog" aria-modal="true" aria-labelledby="liveWorkoutTitle">
+      <header class="live-workout-header">
+        <button class="icon-btn" type="button" id="liveWorkoutMinimise" aria-label="Minimise workout">⌄</button>
+        <div class="live-workout-title-wrap">
+          <p class="eyebrow">Workout in progress</p>
+          <h2 id="liveWorkoutTitle">Workout</h2>
+          <span class="muted" id="liveWorkoutMeta"></span>
+        </div>
+        <div class="live-workout-actions">
+          <button class="secondary small" type="button" id="restTimerButton">Rest 01:30</button>
+          <button class="primary" type="button" id="finishLiveWorkout">Finish</button>
+        </div>
+      </header>
+      <div class="live-workout-progress"><span id="liveWorkoutProgressBar"></span></div>
+      <main class="live-workout-body" id="liveWorkoutBody"></main>
+      <footer class="live-workout-footer">
+        <div class="live-timer-panel">
+          <span class="eyebrow">Rest timer</span>
+          <strong id="restTimerDisplay">01:30</strong>
+          <div class="timer-controls">
+            <button class="secondary small" type="button" id="restMinus">−30s</button>
+            <button class="primary small" type="button" id="restStartStop">Start</button>
+            <button class="secondary small" type="button" id="restPlus">+30s</button>
+            <button class="secondary small" type="button" id="restReset">Reset</button>
+          </div>
+        </div>
+        <div class="live-workout-save-state" id="liveWorkoutSaveState">Saved on this device</div>
+      </footer>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

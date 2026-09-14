@@ -500,7 +500,7 @@ renderHomeTravel();
 
 
 // v6 launch-state and modal safety
-const orbitModals = ['flightModal', 'tripModal', 'tripDetailModal', 'itemModal', 'workoutModal', 'exerciseModal', 'workoutDetailModal']
+const orbitModals = ['flightModal', 'tripModal', 'tripDetailModal', 'itemModal', 'workoutModal', 'exerciseModal', 'workoutDetailModal', 'liveWorkoutModal']
   .map(id => document.getElementById(id))
   .filter(Boolean);
 
@@ -536,6 +536,106 @@ const workouts = () => readJSON(workoutStorageKey);
 const exercises = () => readJSON(exerciseStorageKey);
 const trainingLogs = () => readJSON(trainingLogsKey);
 
+// --- Exercise database ----------------------------------------------------
+// Kinetic.place publishes an MIT-licensed dataset and a free hosted REST API.
+// Orbit uses the hosted API at runtime so the static PWA stays small.
+const exerciseApiBase = 'https://api.kinetic.place/v1/exercises';
+let remoteExerciseCache = [];
+let exerciseDbLoading = false;
+let exerciseDbInitialised = false;
+
+const normaliseRemoteExercise = (e = {}) => {
+  const muscles = Array.isArray(e.muscleGroups) ? e.muscleGroups :
+    (Array.isArray(e.targetMuscles) ? e.targetMuscles.map(name => ({name, type:'primary'})) : []);
+  const equip = Array.isArray(e.equipment) ? e.equipment :
+    (Array.isArray(e.equipments) ? e.equipments.map(name => ({name})) : []);
+  const primary = muscles.find(m => String(m.type || '').toLowerCase() === 'primary') || muscles[0] || {};
+  const instructionList = Array.isArray(e.instructions) ? e.instructions :
+    (Array.isArray(e.keywords) ? e.keywords.filter(Boolean).slice(0,4) : []);
+  const media = e.mediaUrl || e.gifUrl || e.imageUrl || e.videoUrl || e.video?.url || e.gif?.url || '';
+  return {
+    id: String(e.id || e.exerciseId || uid2('dbex')),
+    name: e.name || 'Unnamed exercise',
+    muscle: primary.name || primary.slug || 'General',
+    equipment: equip[0]?.name || equip[0]?.type || '—',
+    mediaUrl: media,
+    instructions: instructionList.join(' '),
+    difficulty: e.difficultyLevel || '',
+    category: e.category || e.exerciseType || 'strength',
+    source: 'Kinetic.place'
+  };
+};
+
+const extractExerciseArray = payload => {
+  if (Array.isArray(payload)) return payload;
+  return payload?.data || payload?.results || payload?.exercises || [];
+};
+
+const fetchExerciseDatabase = async (params = {}) => {
+  const usp = new URLSearchParams();
+  Object.entries(params).forEach(([k,v]) => { if (v) usp.set(k,v); });
+  usp.set('limit', params.limit || '36');
+  const res = await fetch(`${exerciseApiBase}?${usp.toString()}`, {headers:{'Accept':'application/json'}});
+  if (!res.ok) throw new Error(`Exercise database returned ${res.status}`);
+  const data = await res.json();
+  return extractExerciseArray(data).map(normaliseRemoteExercise);
+};
+
+const uniqueById = arr => [...new Map(arr.map(x => [x.id, x])).values()];
+
+const populateExerciseFilters = (items) => {
+  const muscle = document.getElementById('exerciseDbMuscle');
+  const equip = document.getElementById('exerciseDbEquipment');
+  if (!muscle || !equip) return;
+  const currentM = muscle.value, currentE = equip.value;
+  const muscles = [...new Set(items.map(x=>x.muscle).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const equipment = [...new Set(items.map(x=>x.equipment).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  muscle.innerHTML = `<option value="">All muscles</option>${muscles.map(x=>`<option>${escapeHtml(x)}</option>`).join('')}`;
+  equip.innerHTML = `<option value="">All equipment</option>${equipment.map(x=>`<option>${escapeHtml(x)}</option>`).join('')}`;
+  if (muscles.includes(currentM)) muscle.value = currentM;
+  if (equipment.includes(currentE)) equip.value = currentE;
+};
+
+const addRemoteExerciseToLibrary = (ex) => {
+  const all = exercises();
+  if (!all.some(x=>x.id===ex.id)) writeJSON(exerciseStorageKey, [...all, ex]);
+  renderTraining();
+};
+
+const renderExerciseDatabase = (items) => {
+  const lib = document.getElementById('exerciseLibrary');
+  if (!lib) return;
+  const q=(document.getElementById('exerciseDbSearch')?.value||'').trim().toLowerCase();
+  const m=(document.getElementById('exerciseDbMuscle')?.value||'').toLowerCase();
+  const eq=(document.getElementById('exerciseDbEquipment')?.value||'').toLowerCase();
+  const matches = uniqueById(items).filter(x => {
+    const hay = `${x.name} ${x.muscle} ${x.equipment}`.toLowerCase();
+    return (!q || hay.includes(q)) && (!m || x.muscle.toLowerCase()===m) && (!eq || x.equipment.toLowerCase()===eq);
+  }).slice(0,36);
+  document.getElementById('exerciseDbStatus').textContent = exerciseDbLoading ? 'Loading exercise database…' : `${matches.length} exercises shown · Kinetic.place`;
+  lib.innerHTML = matches.length ? matches.map(ex=>`<article class="exercise-card database-exercise-card">${renderExerciseMedia(ex)}<div class="exercise-card-body"><div class="exercise-card-top"><div><h3>${escapeHtml(ex.name)}</h3><p>${escapeHtml(ex.muscle)} · ${escapeHtml(ex.equipment)}</p></div><button class="secondary small" data-db-add="${escapeHtml(ex.id)}">Add</button></div><small>${escapeHtml(ex.instructions||'Technique information available in the exercise database.')}</small></div></article>`).join('') : `<div class="empty-state"><strong>No exercises found</strong><span>Try another search or clear your filters.</span></div>`;
+  lib.querySelectorAll('[data-db-add]').forEach(btn=>btn.addEventListener('click',()=>{const ex=remoteExerciseCache.find(x=>x.id===btn.dataset.dbAdd);if(ex){addRemoteExerciseToLibrary(ex);btn.textContent='Added';btn.disabled=true;}}));
+};
+
+const initExerciseDatabase = async () => {
+  if (exerciseDbInitialised || exerciseDbLoading) return;
+  exerciseDbLoading = true; renderExerciseDatabase(remoteExerciseCache);
+  try {
+    remoteExerciseCache = await fetchExerciseDatabase({limit:36});
+    exerciseDbInitialised = true;
+    populateExerciseFilters(remoteExerciseCache);
+    renderExerciseDatabase(remoteExerciseCache);
+  } catch (err) {
+    exerciseDbLoading = false;
+    const status=document.getElementById('exerciseDbStatus');
+    if(status) status.textContent='Database unavailable right now. Your saved Orbit exercises are still available.';
+    renderExerciseDatabase(exercises());
+    return;
+  }
+  exerciseDbLoading = false;
+  renderExerciseDatabase(remoteExerciseCache);
+};
+
 const uid2 = (prefix='id') => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 const fmtWeight = n => Number(n || 0).toLocaleString(undefined,{maximumFractionDigits:1});
 const weekStart = () => { const d=new Date(); const day=(d.getDay()+6)%7; d.setHours(0,0,0,0); d.setDate(d.getDate()-day); return d; };
@@ -551,6 +651,49 @@ const seedExercises = () => {
   ]);
 };
 seedExercises();
+
+const seedStarterPushDay = () => {
+  if (workouts().length) return;
+  const all = exercises();
+  const names = [
+    ['Smith Incline Bench Press','Chest','Smith Machine'],
+    ['Lever Chest Press','Chest','Machine'],
+    ['Lever Seated Fly','Chest','Machine'],
+    ['Cable Standing High Cross Triceps Extension','Triceps','Cable'],
+    ['Cable Pushdown','Triceps','Cable'],
+    ['Cable One Arm Lateral Raise','Shoulders','Cable'],
+    ['Lever Triceps Dip','Triceps','Machine'],
+    ['Cable Low Fly','Chest','Cable']
+  ];
+  const ids = names.map(([name,muscle,equipment]) => {
+    let ex = all.find(x => x.name.toLowerCase() === name.toLowerCase());
+    if (!ex) {
+      ex = {id:uid2('ex'),name,muscle,equipment,mediaUrl:'',instructions:'Add technique notes or database media when available.',source:'Orbit starter'};
+      all.push(ex);
+    }
+    return ex.id;
+  });
+  writeJSON(exerciseStorageKey, all);
+  writeJSON(workoutStorageKey,[{
+    id:uid2('workout'),
+    name:'Push Day',
+    duration:65,
+    notes:'Starter routine based on your current Push Day.',
+    exerciseIds:ids,
+    createdAt:new Date().toISOString(),
+    targets:[
+      [{weight:60,reps:8},{weight:60,reps:8},{weight:60,reps:8}],
+      [{weight:80,reps:10},{weight:85,reps:8},{weight:85,reps:8}],
+      [{weight:30,reps:12},{weight:30,reps:12},{weight:30,reps:12}],
+      [{weight:20,reps:12},{weight:20,reps:12},{weight:20,reps:12}],
+      [{weight:22.5,reps:12},{weight:22.5,reps:12},{weight:22.5,reps:12}],
+      [{weight:7.5,reps:12},{weight:7.5,reps:12},{weight:7.5,reps:12},{weight:7.5,reps:12},{weight:7.5,reps:12},{weight:7.5,reps:12}],
+      [{weight:120,reps:12},{weight:120,reps:12},{weight:120,reps:12}],
+      [{weight:10,reps:12},{weight:10,reps:12},{weight:10,reps:12}]
+    ]
+  }]);
+};
+seedStarterPushDay();
 
 const workoutModal = document.getElementById('workoutModal');
 const exerciseModal = document.getElementById('exerciseModal');
@@ -613,14 +756,15 @@ const renderTraining = () => {
   document.getElementById('workoutCountLabel').textContent=`${ws.length} saved`;
   const wl=document.getElementById('workoutList'), empty=document.getElementById('emptyWorkouts');
   empty.classList.toggle('hidden',ws.length>0);
-  wl.innerHTML=ws.map(w=>`<article class="workout-row"><div class="workout-icon"><svg class="card-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8v8M4.5 10v4M9.5 7v10M17 8v8M19.5 10v4M14.5 7v10M9.5 12h5"/></svg></div><div><h3>${escapeHtml(w.name)}</h3><p>${w.exerciseIds.length} exercises${w.duration?` · ${w.duration} min`:''}${w.notes?` · ${escapeHtml(w.notes)}`:''}</p></div><div class="workout-actions"><button class="secondary small" data-open-workout="${w.id}">Open</button><button class="icon-btn danger" title="Delete workout" data-delete-workout="${w.id}">×</button></div></article>`).join('');
-  wl.querySelectorAll('[data-open-workout]').forEach(b=>b.addEventListener('click',()=>openWorkoutDetail(b.dataset.openWorkout)));
+  wl.innerHTML=ws.map(w=>`<article class="workout-row"><div class="workout-icon"><svg class="card-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8v8M4.5 10v4M9.5 7v10M17 8v8M19.5 10v4M14.5 7v10M9.5 12h5"/></svg></div><div><h3>${escapeHtml(w.name)}</h3><p>${w.exerciseIds.length} exercises${w.duration?` · ${w.duration} min`:''}${w.notes?` · ${escapeHtml(w.notes)}`:''}</p></div><div class="workout-actions"><button class="secondary small" data-open-workout="${w.id}">Open</button><button class="primary small" data-start-workout="${w.id}">Start</button><button class="icon-btn danger" title="Delete workout" data-delete-workout="${w.id}">×</button></div></article>`).join('');
+  wl.querySelectorAll('[data-open-workout]').forEach(b=>b.addEventListener('click',()=>openWorkoutDetail(b.dataset.openWorkout))); wl.querySelectorAll('[data-start-workout]').forEach(b=>b.addEventListener('click',()=>startLiveWorkout(b.dataset.startWorkout)));
   wl.querySelectorAll('[data-delete-workout]').forEach(b=>b.addEventListener('click',()=>{writeJSON(workoutStorageKey,workouts().filter(w=>w.id!==b.dataset.deleteWorkout));renderTraining();}));
   const lib=document.getElementById('exerciseLibrary');
-  lib.innerHTML=ex.map(e=>`<article class="exercise-card">${renderExerciseMedia(e)}<div><h3>${escapeHtml(e.name)}</h3><p>${escapeHtml(e.muscle)} · ${escapeHtml(e.equipment)}</p><small>${escapeHtml(e.instructions||'Add form cues in the exercise editor.')}</small></div></article>`).join('');
+  if (remoteExerciseCache.length) renderExerciseDatabase(remoteExerciseCache);
+  else { lib.innerHTML=ex.map(e=>`<article class="exercise-card">${renderExerciseMedia(e)}<div><h3>${escapeHtml(e.name)}</h3><p>${escapeHtml(e.muscle)} · ${escapeHtml(e.equipment)}</p><small>${escapeHtml(e.instructions||'Add form cues in the exercise editor.')}</small></div></article>`).join(''); }
   const nw=ws[0]; document.getElementById('nextWorkoutMeta').textContent=nw?`${nw.exerciseIds.length} exercises`:'';
   document.getElementById('nextWorkoutBody').innerHTML=nw?`<div class="next-workout-name">${escapeHtml(nw.name)}</div><div class="next-workout-meta"><span>${nw.exerciseIds.length} exercises</span>${nw.duration?`<span>~${nw.duration} min</span>`:''}</div><button class="primary small training-side-button" data-start-next="${nw.id}">Start workout</button>`:`<div class="muted">Create a workout to get started.</div>`;
-  document.querySelector('[data-start-next]')?.addEventListener('click',e=>openWorkoutDetail(e.currentTarget.dataset.startNext));
+  document.querySelector('[data-start-next]')?.addEventListener('click',e=>startLiveWorkout(e.currentTarget.dataset.startNext));
   renderProgress(logs);
 };
 
@@ -641,7 +785,8 @@ const renderWorkoutDetail=w=>{
   const exs=exercises();
   const exerciseCards=w.exerciseIds.map(id=>{
     const ex=exs.find(x=>x.id===id); if(!ex)return '';
-    return `<article class="workout-exercise" data-workout-exercise="${ex.id}"><div class="workout-exercise-head"><div><h3>${escapeHtml(ex.name)}</h3><div class="muted">${escapeHtml(ex.muscle)} · ${escapeHtml(ex.equipment)}</div></div><button class="icon-btn danger" data-remove-exercise="${ex.id}" title="Remove">×</button></div><table class="set-table"><thead><tr><th>Set</th><th>Weight (kg)</th><th>Reps</th><th>Done</th></tr></thead><tbody>${[0,1,2].map((_,i)=>`<tr><td>${i+1}</td><td><input class="set-input" inputmode="decimal" data-weight data-index="${i}" value=""></td><td><input class="set-input" inputmode="numeric" data-reps data-index="${i}" value=""></td><td><input type="checkbox" data-done data-index="${i}"></td></tr>`).join('')}</tbody></table><div class="set-actions"><button class="secondary small" data-add-set="${ex.id}">+ Add set</button><span class="muted" data-last-stat="${ex.id}"></span></div></article>`;
+    const exIndex=w.exerciseIds.indexOf(ex.id); const targets=Array.isArray(w.targets?.[exIndex]) ? w.targets[exIndex] : [{weight:'',reps:''},{weight:'',reps:''},{weight:'',reps:''}];
+    return `<article class="workout-exercise" data-workout-exercise="${ex.id}"><div class="workout-exercise-head"><div><h3>${escapeHtml(ex.name)}</h3><div class="muted">${escapeHtml(ex.muscle)} · ${escapeHtml(ex.equipment)}</div></div><button class="icon-btn danger" data-remove-exercise="${ex.id}" title="Remove">×</button></div><table class="set-table"><thead><tr><th>Set</th><th>Weight (kg)</th><th>Reps</th><th>Done</th></tr></thead><tbody>${targets.map((target,i)=>`<tr><td>${i+1}</td><td><input class="set-input" inputmode="decimal" data-weight data-index="${i}" value="${target.weight ?? ''}"></td><td><input class="set-input" inputmode="numeric" data-reps data-index="${i}" value="${target.reps ?? ''}"></td><td><input type="checkbox" data-done data-index="${i}"></td></tr>`).join('')}</tbody></table><div class="set-actions"><button class="secondary small" data-add-set="${ex.id}">+ Add set</button><span class="muted" data-last-stat="${ex.id}"></span></div></article>`;
   }).join('');
   document.getElementById('workoutDetailBody').innerHTML=`<div class="workout-detail-toolbar"><strong>${w.exerciseIds.length} exercises</strong><button class="secondary small" id="addExerciseToWorkout">+ Add exercise</button></div>${exerciseCards || '<div class="empty-state"><strong>No exercises yet</strong><p class="muted">Add exercises to this workout.</p></div>'}<div class="modal-actions"><button class="primary" id="finishWorkout">Finish & save workout</button></div>`;
   document.getElementById('addExerciseToWorkout')?.addEventListener('click',()=>showExercisePicker(w));
@@ -670,7 +815,13 @@ const finishWorkout=w=>{
 };
 
 document.getElementById('showProgressButton')?.addEventListener('click',()=>showSection('training'));
+
+document.getElementById('exerciseDbSearch')?.addEventListener('input',()=>renderExerciseDatabase(remoteExerciseCache));
+document.getElementById('exerciseDbMuscle')?.addEventListener('change',()=>renderExerciseDatabase(remoteExerciseCache));
+document.getElementById('exerciseDbEquipment')?.addEventListener('change',()=>renderExerciseDatabase(remoteExerciseCache));
+document.getElementById('training')?.addEventListener('click',(e)=>{ if(e.target.closest('[data-section]')) initExerciseDatabase(); });
 renderTraining();
+setTimeout(initExerciseDatabase, 60);
 
 
 // v12 responsive navigation
@@ -713,4 +864,211 @@ globalSearch?.addEventListener('keydown', (event) => {
 document.addEventListener('click', (event) => {
   if (!topbar?.classList.contains('search-open')) return;
   if (!topbar.contains(event.target)) closeSearch();
+});
+
+
+// --- Orbit live workout screen (v17) ----------------------------------------
+const liveWorkoutModal = document.getElementById('liveWorkoutModal');
+const liveWorkoutBody = document.getElementById('liveWorkoutBody');
+const liveWorkoutTitle = document.getElementById('liveWorkoutTitle');
+const liveWorkoutMeta = document.getElementById('liveWorkoutMeta');
+const liveWorkoutProgressBar = document.getElementById('liveWorkoutProgressBar');
+const liveWorkoutSaveState = document.getElementById('liveWorkoutSaveState');
+const restTimerDisplay = document.getElementById('restTimerDisplay');
+const restTimerButton = document.getElementById('restTimerButton');
+const restStartStop = document.getElementById('restStartStop');
+const restMinus = document.getElementById('restMinus');
+const restPlus = document.getElementById('restPlus');
+const restReset = document.getElementById('restReset');
+const liveWorkoutMinimise = document.getElementById('liveWorkoutMinimise');
+const finishLiveWorkoutButton = document.getElementById('finishLiveWorkout');
+const liveDraftKey = 'orbit-live-workout-draft';
+let liveWorkoutState = null;
+let restSeconds = 90;
+let restRunning = false;
+let restInterval = null;
+
+const getHistoricalExerciseLogs = exId => trainingLogs().filter(l => l.exerciseId === exId).sort((a,b) => {
+  const ad = a.loggedAt || `${a.date || ''}T00:00:00`;
+  const bd = b.loggedAt || `${b.date || ''}T00:00:00`;
+  return ad.localeCompare(bd);
+});
+const getLatestExerciseLog = exId => {
+  const logs = getHistoricalExerciseLogs(exId);
+  return logs.length ? logs[logs.length - 1] : null;
+};
+const getHistoricalBestWeight = exId => getHistoricalExerciseLogs(exId).flatMap(l => l.sets || []).reduce((best,s) => Math.max(best, Number(s.weight)||0), 0);
+const readLiveDraft = () => readJSON(liveDraftKey, null);
+const writeLiveDraft = state => {
+  if (!state) return;
+  writeJSON(liveDraftKey, state);
+  if (liveWorkoutSaveState) liveWorkoutSaveState.textContent = `Saved ${new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'})}`;
+};
+const clearLiveDraft = () => localStorage.removeItem(liveDraftKey);
+const formatClock = total => {
+  const sec = Math.max(0, Math.round(total));
+  return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+};
+const updateRestUI = () => {
+  const label = formatClock(restSeconds);
+  if (restTimerDisplay) restTimerDisplay.textContent = label;
+  if (restTimerButton) restTimerButton.textContent = `Rest ${label}`;
+  if (restStartStop) restStartStop.textContent = restRunning ? 'Pause' : 'Start';
+};
+const stopRestTimer = () => { restRunning = false; if (restInterval) clearInterval(restInterval); restInterval = null; updateRestUI(); };
+const startRestTimer = () => {
+  if (restRunning) return;
+  restRunning = true;
+  updateRestUI();
+  restInterval = setInterval(() => {
+    restSeconds -= 1;
+    if (restSeconds <= 0) { restSeconds = 0; stopRestTimer(); try { navigator.vibrate?.([180,80,180]); } catch {} }
+    updateRestUI();
+  }, 1000);
+};
+const resetRestTimer = () => { stopRestTimer(); restSeconds = 90; updateRestUI(); };
+const renderLiveMedia = ex => {
+  if (!ex?.mediaUrl) return `<div class="live-demo-panel"><span class="muted">No demonstration media is attached to this exercise yet.</span></div>`;
+  const u=escapeHtml(ex.mediaUrl); const low=String(ex.mediaUrl).toLowerCase();
+  const body=(low.endsWith('.mp4')||low.includes('video')) ? `<video src="${u}" controls muted loop autoplay playsinline></video>` : `<img src="${u}" alt="${escapeHtml(ex.name)} demonstration">`;
+  return `<div class="live-demo-panel">${body}</div>`;
+};
+const buildLiveSets = (exId, planned) => {
+  const latest = getLatestExerciseLog(exId);
+  const previous = Array.isArray(latest?.sets) ? latest.sets : [];
+  const draft = liveWorkoutState?.setsByExercise?.[exId];
+  if (Array.isArray(draft) && draft.length) return draft.map(x => ({weight:x.weight ?? '', reps:x.reps ?? '', done:!!x.done}));
+  if (previous.length) return previous.map(x => ({weight:x.weight ?? '', reps:x.reps ?? '', done:false}));
+  if (Array.isArray(planned) && planned.length) return planned.map(x => ({weight:x.weight ?? '', reps:x.reps ?? '', done:false}));
+  return [{weight:'',reps:'',done:false},{weight:'',reps:'',done:false},{weight:'',reps:'',done:false}];
+};
+const currentDoneCount = () => {
+  let done=0,total=0;
+  (liveWorkoutState?.setsByExercise ? Object.values(liveWorkoutState.setsByExercise) : []).forEach(sets => (sets||[]).forEach(s=>{ total++; if(s.done) done++; }));
+  return {done,total};
+};
+const refreshLiveProgress = () => {
+  const {done,total}=currentDoneCount();
+  if(liveWorkoutProgressBar) liveWorkoutProgressBar.style.width = total ? `${Math.min(100,(done/total)*100)}%` : '0%';
+  if(liveWorkoutMeta && liveWorkoutState) liveWorkoutMeta.textContent = `${liveWorkoutState.exerciseIds.length} exercises · ${done}/${total} sets complete`;
+};
+const persistLiveFromDOM = () => {
+  if (!liveWorkoutState) return;
+  const setsByExercise = {};
+  document.querySelectorAll('.live-exercise-card').forEach(card => {
+    const id = card.dataset.exerciseId;
+    setsByExercise[id] = [...card.querySelectorAll('tbody tr')].map(row => ({
+      weight: row.querySelector('[data-live-weight]')?.value || '',
+      reps: row.querySelector('[data-live-reps]')?.value || '',
+      done: !!row.querySelector('[data-live-done]')?.checked
+    }));
+  });
+  liveWorkoutState.setsByExercise = setsByExercise;
+  writeLiveDraft(liveWorkoutState);
+  refreshLiveProgress();
+};
+const renderLiveWorkout = w => {
+  const exs = exercises();
+  liveWorkoutTitle.textContent = w.name;
+  liveWorkoutMeta.textContent = `${w.exerciseIds.length} exercises`;
+  const cards = w.exerciseIds.map((id,index) => {
+    const ex = exs.find(x=>x.id===id); if(!ex) return '';
+    const latest = getLatestExerciseLog(id);
+    const previousSets = Array.isArray(latest?.sets) ? latest.sets : [];
+    const planned = Array.isArray(w.targets?.[index]) ? w.targets[index] : [];
+    const sets = buildLiveSets(id, planned);
+    const historicalBest = getHistoricalBestWeight(id);
+    return `<article class="live-exercise-card" data-exercise-id="${escapeHtml(id)}">
+      <div class="live-exercise-top">
+        <div class="live-exercise-media">${ex.mediaUrl ? ((String(ex.mediaUrl).toLowerCase().endsWith('.mp4')||String(ex.mediaUrl).toLowerCase().includes('video'))?`<video src="${escapeHtml(ex.mediaUrl)}" muted loop autoplay playsinline></video>`:`<img src="${escapeHtml(ex.mediaUrl)}" alt="">`) : `<span class="media-placeholder">🏋️</span>`}</div>
+        <div class="live-exercise-name"><h3>${escapeHtml(ex.name)}</h3><p>${escapeHtml(ex.muscle || 'General')} · ${escapeHtml(ex.equipment || '—')}</p></div>
+        ${ex.mediaUrl ? `<button class="secondary small demo-button" type="button" data-demo-toggle="${escapeHtml(id)}">View demo</button>` : ''}
+      </div>
+      <div class="live-exercise-meta"><span>${previousSets.length ? `Last: ${escapeHtml(previousSets.map(s=>`${s.weight || '—'} × ${s.reps || '—'}`).join(' · '))}` : 'No previous session'}</span>${historicalBest ? `<span>Best: ${fmtWeight(historicalBest)} kg</span>` : '<span>First logged session</span>'}</div>
+      <div class="live-demo-slot hidden" data-demo-slot="${escapeHtml(id)}">${renderLiveMedia(ex)}</div>
+      <table class="live-set-table"><thead><tr><th>Set</th><th>Previous</th><th>Weight</th><th>Reps</th><th>Done</th><th></th></tr></thead><tbody>${sets.map((set,i)=>{
+        const prev=previousSets[i] || {};
+        const isPB=historicalBest>0 && Number(set.weight)>historicalBest;
+        return `<tr class="${set.done?'is-done':''}" data-set-row="${i}"><td class="live-set-num">${i+1}</td><td class="previous-value">${prev.weight ? `<b>${escapeHtml(String(prev.weight))}</b> × ${escapeHtml(String(prev.reps||'—'))}` : '—'}</td><td><input class="live-set-input" data-live-weight data-index="${i}" inputmode="decimal" value="${escapeHtml(String(set.weight))}" aria-label="Set ${i+1} weight"></td><td><input class="live-set-input" data-live-reps data-index="${i}" inputmode="numeric" value="${escapeHtml(String(set.reps))}" aria-label="Set ${i+1} reps"></td><td><input type="checkbox" data-live-done data-index="${i}" ${set.done?'checked':''} aria-label="Complete set ${i+1}"></td><td>${isPB?'<span class="pb-badge">New PB</span>':''}</td></tr>`;
+      }).join('')}</tbody></table>
+      <div class="live-set-tools"><button class="secondary small" type="button" data-live-add-set="${escapeHtml(id)}">+ Add set</button><span class="muted">${escapeHtml(ex.instructions || 'Use controlled reps and keep good form.')}</span></div>
+    </article>`;
+  }).join('');
+  liveWorkoutBody.innerHTML = cards || `<div class="empty-state"><strong>No exercises in this workout</strong><span>Add exercises before starting.</span></div>`;
+  wireLiveWorkoutEvents();
+  refreshLiveProgress();
+};
+const wireLiveWorkoutEvents = () => {
+  liveWorkoutBody.querySelectorAll('[data-demo-toggle]').forEach(btn => btn.addEventListener('click', () => {
+    const slot=liveWorkoutBody.querySelector(`[data-demo-slot="${CSS.escape(btn.dataset.demoToggle)}"]`); if(!slot)return;
+    slot.classList.toggle('hidden'); btn.textContent = slot.classList.contains('hidden') ? 'View demo' : 'Hide demo';
+  }));
+  liveWorkoutBody.querySelectorAll('[data-live-add-set]').forEach(btn => btn.addEventListener('click', () => {
+    const card=btn.closest('.live-exercise-card'); const tbody=card?.querySelector('tbody'); if(!tbody)return;
+    const idx=tbody.children.length; const row=document.createElement('tr');
+    row.innerHTML=`<td class="live-set-num">${idx+1}</td><td class="previous-value">—</td><td><input class="live-set-input" data-live-weight data-index="${idx}" inputmode="decimal" value="" aria-label="Set ${idx+1} weight"></td><td><input class="live-set-input" data-live-reps data-index="${idx}" inputmode="numeric" value="" aria-label="Set ${idx+1} reps"></td><td><input type="checkbox" data-live-done data-index="${idx}" aria-label="Complete set ${idx+1}"></td><td></td>`;
+    tbody.appendChild(row); persistLiveFromDOM();
+  }));
+  liveWorkoutBody.querySelectorAll('[data-live-done]').forEach(input => input.addEventListener('change', () => {
+    input.closest('tr')?.classList.toggle('is-done', input.checked);
+    if(input.checked) { restSeconds=90; startRestTimer(); }
+    persistLiveFromDOM();
+    // update PB badge after input changes/checks
+  }));
+  liveWorkoutBody.querySelectorAll('[data-live-weight],[data-live-reps]').forEach(input => input.addEventListener('input', () => { persistLiveFromDOM(); updateLivePBs(input.closest('.live-exercise-card')); }));
+};
+const updateLivePBs = card => {
+  if(!card) return;
+  const best=getHistoricalBestWeight(card.dataset.exerciseId);
+  card.querySelectorAll('tbody tr').forEach(row => {
+    let cell=row.lastElementChild; if(!cell)return;
+    const weight=Number(row.querySelector('[data-live-weight]')?.value||0);
+    cell.innerHTML = best>0 && weight>best ? '<span class="pb-badge">New PB</span>' : '';
+  });
+};
+const startLiveWorkout = id => {
+  const w=workouts().find(x=>x.id===id); if(!w)return;
+  const draft=readLiveDraft();
+  if(draft?.workoutId===id) {
+    liveWorkoutState=draft;
+  } else {
+    liveWorkoutState={workoutId:id,workoutName:w.name,exerciseIds:[...w.exerciseIds],startedAt:new Date().toISOString(),setsByExercise:{}};
+    w.exerciseIds.forEach((eid,idx)=>{liveWorkoutState.setsByExercise[eid]=buildLiveSets(eid,Array.isArray(w.targets?.[idx])?w.targets[idx]:[]);});
+    writeLiveDraft(liveWorkoutState);
+  }
+  renderLiveWorkout(w); openTrainingModal(liveWorkoutModal); resetRestTimer();
+};
+const minimiseLiveWorkout = () => { persistLiveFromDOM(); liveWorkoutModal?.classList.add('live-workout-minimised'); };
+const restoreLiveWorkout = () => { liveWorkoutModal?.classList.remove('live-workout-minimised'); const w=workouts().find(x=>x.id===liveWorkoutState?.workoutId); if(w) renderLiveWorkout(w); };
+const finishLiveWorkout = () => {
+  if(!liveWorkoutState) return;
+  persistLiveFromDOM();
+  const w=workouts().find(x=>x.id===liveWorkoutState.workoutId); if(!w)return;
+  const sessionId=uid2('session'); const loggedAt=new Date().toISOString(); let exerciseCount=0; let pbCount=0; let totalVolume=0;
+  Object.entries(liveWorkoutState.setsByExercise || {}).forEach(([exId,sets])=>{
+    const ex=exercises().find(x=>x.id===exId); if(!ex)return;
+    const completed=(sets||[]).map(s=>({weight:Number(s.weight)||0,reps:Number(s.reps)||0,done:!!s.done})).filter(s=>s.done&&(s.weight||s.reps));
+    if(!completed.length)return;
+    exerciseCount++;
+    const priorBest=getHistoricalBestWeight(exId); const best=Math.max(...completed.map(s=>s.weight)); if(best>priorBest && priorBest>0) pbCount++; else if(priorBest===0 && best>0) pbCount++;
+    completed.forEach(s=>{totalVolume += s.weight*s.reps;});
+    writeJSON(trainingLogsKey,[...trainingLogs(),{id:uid2('log'),sessionId,date:loggedAt.slice(0,10),loggedAt,name:w.name,exerciseId:exId,exerciseName:ex.name,sets:completed,pbCount:best>priorBest?1:0}]);
+  });
+  if(!exerciseCount){ alert('Complete at least one set before finishing the workout. Your draft is still saved on this device.'); return; }
+  clearLiveDraft(); liveWorkoutState=null; resetRestTimer(); liveWorkoutModal?.classList.remove('live-workout-minimised'); closeTrainingModal(liveWorkoutModal); renderTraining();
+  alert(`Workout saved. ${exerciseCount} exercises · ${fmtWeight(totalVolume)} kg volume${pbCount?` · ${pbCount} new PB${pbCount===1?'':'s'}`:''}.`);
+};
+restStartStop?.addEventListener('click',()=>restRunning ? stopRestTimer() : startRestTimer());
+restTimerButton?.addEventListener('click',()=>restRunning ? stopRestTimer() : startRestTimer());
+restMinus?.addEventListener('click',()=>{restSeconds=Math.max(0,restSeconds-30);updateRestUI();});
+restPlus?.addEventListener('click',()=>{restSeconds+=30;updateRestUI();});
+restReset?.addEventListener('click',resetRestTimer);
+liveWorkoutMinimise?.addEventListener('click',()=> liveWorkoutModal?.classList.contains('live-workout-minimised') ? restoreLiveWorkout() : minimiseLiveWorkout());
+finishLiveWorkoutButton?.addEventListener('click',finishLiveWorkout);
+
+// Home and Next Workout buttons should start the live workout experience.
+document.querySelectorAll('.stat-card button.primary.small').forEach(btn => {
+  if (btn.textContent.trim().toLowerCase().includes('start workout')) {
+    btn.addEventListener('click', () => { const w=workouts()[0]; if(w) startLiveWorkout(w.id); });
+  }
 });
